@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Add Prescription | HMS</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #eef3f8;
+            font-family: "Segoe UI", sans-serif;
+            padding: 30px;
+        }
+
+        .container-box {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .card {
+            border-radius: 18px;
+            padding: 35px;
+            box-shadow: 0px 6px 18px rgba(0,0,0,0.1);
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .info-box {
+            background: #f8fbff;
+            border-left: 4px solid #0d6efd;
+            padding: 18px 22px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
+        }
+
+        .info-box p {
+            margin: 6px 0;
+        }
+
+        textarea {
+            border-radius: 12px !important;
+            font-size: 16px;
+            padding: 15px !important;
+            background: #fdfdfd;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .btn {
+            height: 48px;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-box">
+    <div class="card">
+
+        <h2 class="section-title mb-4">
+            <i class="bi bi-file-medical-fill"></i> Appointment Details & Prescription
+        </h2>
+
+        <!-- Appointment Info -->
+        <div id="appointmentInfo" class="info-box">
+            Loading...
+        </div>
+
+        <!-- Prescription -->
+        <h4 class="text-secondary fw-bold">
+            <i class="bi bi-pencil-square"></i> Write Prescription
+        </h4>
+
+        <form id="prescriptionForm" method="POST" class="mt-3">
+            <div class="mb-3">
+                <textarea
+                    class="form-control"
+                    name="prescription"
+                    id="prescription"
+                    rows="6"
+                    placeholder="Write medicines, dosage & instructions..."
+                    required></textarea>
+            </div>
+
+            <button class="btn btn-success w-100 mb-3" type="submit">
+                <i class="bi bi-check2-circle"></i> Save Prescription
+            </button>
+        </form>
+
+        <hr class="my-4">
+
+        <!-- Buttons Row -->
+        <div class="d-flex gap-3 flex-wrap">
+            <button id="receiptBtn" class="btn btn-outline-primary flex-grow-1">
+                <i class="bi bi-filetype-pdf"></i> Download Receipt (PDF)
+            </button>
+
+            <button id="videoBtn" class="btn btn-outline-dark flex-grow-1">
+                <i class="bi bi-camera-video-fill"></i> Start Video Call
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- JS Logic -->
+<script>
+    const appointmentId = window.location.pathname.split("/").pop();
+
+    document.getElementById("prescriptionForm").action =
+        `/doctors/submit-prescription/${appointmentId}`;
+
+    // Load appointment info
+    fetch(`/doctors/appointment/${appointmentId}`)
+        .then(res => res.json())
+        .then(appt => {
+            let html = `
+                <p><strong>Appointment ID:</strong> ${appt._id}</p>
+                <p><strong>Patient ID:</strong> ${appt.patientId}</p>
+                <p><strong>Doctor ID:</strong> ${appt.doctorId}</p>
+                <p><strong>Date:</strong> ${appt.date}</p>
+                <p><strong>Status:</strong>
+                    <span class="badge bg-success">${appt.status}</span>
+                </p>
+                <p><strong>Problem:</strong><br>${appt.problemDescription || "No description provided"}</p>
+            `;
+
+            if (appt.images && appt.images.length) {
+                html += `
+                    <p class="mt-3"><strong>Uploaded Images:</strong></p>
+                    <div class="d-flex flex-wrap gap-3">
+                `;
+
+                appt.images.forEach(img => {
+                    const src = "/" + img.replace(/\\/g, "/");
+                    html += `
+                        <img src="${src}" class="border rounded" style="max-width:180px;">
+                    `;
+                });
+
+                html += "</div>";
+            }
+
+            document.getElementById("appointmentInfo").innerHTML = html;
+        });
+
+    // PDF Button
+    document.getElementById("receiptBtn").onclick = () => {
+        window.open(`/doctors/receipt/${appointmentId}`, "_blank");
+    };
+
+    // Video Button
+    document.getElementById("videoBtn").onclick = () => {
+        alert("Feature coming soon");
+    };
+</script>
+
+</body>
+</html>

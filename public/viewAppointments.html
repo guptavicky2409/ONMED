@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>View Appointments | HMS</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #e9eff5;
+      font-family: "Segoe UI", sans-serif;
+      padding: 40px;
+    }
+
+    .page-box {
+      max-width: 1100px;
+      margin: auto;
+      background: white;
+      padding: 35px;
+      border-radius: 20px;
+      box-shadow: 0px 7px 20px rgba(0,0,0,0.12);
+      animation: fadeIn .4s ease-in-out;
+    }
+
+    h2 {
+      font-weight: 700;
+      color: #0d6efd;
+    }
+
+    table {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #0d6efd;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f3f7ff;
+    }
+
+    .btn-sm {
+      border-radius: 8px;
+      font-size: 14px;
+      padding: 5px 10px;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page-box">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-calendar-check-fill"></i> Appointments</h2>
+    <a href="/addAppointment.html" class="btn btn-success">
+      <i class="bi bi-plus-circle"></i> Add Appointment
+    </a>
+  </div>
+
+  <table class="table table-hover table-bordered shadow-sm" id="appointmentTable">
+    <thead>
+      <tr>
+        <th>Patient</th>
+        <th>Doctor</th>
+        <th>Date</th>
+        <th style="width: 250px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+</div>
+
+
+<script>
+async function loadAppointments() {
+  const res = await fetch('/appointments');
+  const data = await res.json();
+  
+  const tbody = document.querySelector('#appointmentTable tbody');
+  tbody.innerHTML = '';
+
+  data.forEach(a => {
+    const tr = document.createElement("tr");
+
+    // Buttons
+    const prescribeBtn = `
+      <button class="btn btn-sm btn-primary"
+        onclick="window.open('/doctors/prescribe/${a._id}', '_blank')">
+        <i class="bi bi-pencil-square"></i> Prescribe
+      </button>`;
+
+    const viewPrescBtn = `
+      <button class="btn btn-sm btn-success"
+        onclick="window.open('/patientViewPrescription.html?appointmentId=${a._id}', '_blank')">
+        <i class="bi bi-file-earmark-medical"></i> View Prescription
+      </button>`;
+
+    const deleteBtn = `
+      <button class="btn btn-sm btn-danger"
+        onclick="deleteAppt('${a._id}')">
+        <i class="bi bi-trash"></i> Delete
+      </button>`;
+
+    tr.innerHTML = `
+      <td>${a.patientName}</td>
+      <td>${a.doctorName}</td>
+      <td>${a.date}</td>
+      <td>
+        <div class="action-group">
+          ${prescribeBtn}
+          ${viewPrescBtn}
+          ${deleteBtn}
+        </div>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+}
+
+async function deleteAppt(id) {
+  if (!confirm("Are you sure you want to delete this appointment?")) return;
+  await fetch('/appointments/' + id, { method: 'DELETE' });
+  loadAppointments();
+}
+
+window.onload = loadAppointments;
+</script>
+
+</body>
+</html>

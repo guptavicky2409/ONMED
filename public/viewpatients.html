@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>View Patients | HMS</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: #e9eff5;
+      font-family: "Segoe UI", sans-serif;
+      padding: 40px;
+    }
+
+    .page-box {
+      max-width: 1100px;
+      margin: auto;
+      background: #ffffff;
+      padding: 35px;
+      border-radius: 20px;
+      box-shadow: 0px 7px 20px rgba(0,0,0,0.12);
+      animation: fadeIn .4s ease-in-out;
+    }
+
+    h2 {
+      font-weight: 700;
+      color: #0d6efd;
+    }
+
+    table {
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background: #0d6efd;
+      color: #ffffff;
+    }
+
+    tr:hover {
+      background: #f3f7ff;
+    }
+
+    td {
+      font-size: 15px;
+      padding: 12px;
+    }
+
+    .btn-sm {
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="page-box">
+
+  <h2 class="mb-4">
+    <i class="bi bi-people-fill"></i> All Patients
+  </h2>
+
+  <table class="table table-hover table-bordered shadow-sm">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Age</th>
+        <th>Gender</th>
+        <th>Disease</th>
+        <th style="width:150px;">Action</th>
+      </tr>
+    </thead>
+    <tbody id="patientsTable"></tbody>
+  </table>
+
+</div>
+
+<script>
+async function loadPatients() {
+  const res = await fetch("/patients/all");
+  const data = await res.json();
+
+  const table = document.getElementById("patientsTable");
+  table.innerHTML = "";
+
+  if (!data.length) {
+    table.innerHTML = `
+      <tr>
+        <td colspan="5" class="text-center text-muted py-3">
+          No patients found.
+        </td>
+      </tr>`;
+    return;
+  }
+
+  data.forEach(p => {
+    table.innerHTML += `
+      <tr>
+        <td>${p.name}</td>
+        <td>${p.age}</td>
+        <td>${p.gender}</td>
+        <td>${p.disease}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deletePatient('${p._id}')">
+            <i class="bi bi-trash-fill"></i> Delete
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+// DELETE PATIENT FUNCTION
+async function deletePatient(id) {
+  if (!confirm("Do you want to delete this patient?")) return;
+
+  await fetch(`/patients/${id}`, { method: "DELETE" });
+  loadPatients(); // Reload table
+}
+
+window.onload = loadPatients;
+</script>
+
+</body>
+</html>

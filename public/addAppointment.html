@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Add Appointment | HMS</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        body {
+            background: #eef3f8;
+            font-family: "Segoe UI", sans-serif;
+            padding: 30px;
+        }
+
+        .form-card {
+            max-width: 700px;
+            margin: auto;
+            margin-top: 40px;
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0px 6px 20px rgba(0,0,0,0.10);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        h2 {
+            font-weight: 700;
+            color: #0d6efd;
+        }
+
+        .form-control, select {
+            height: 48px;
+            border-radius: 12px;
+            font-size: 16px;
+        }
+
+        .btn {
+            height: 48px;
+            border-radius: 12px;
+            font-size: 17px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="form-card">
+    <h2 class="text-center mb-4">
+        <i class="bi bi-calendar-plus-fill"></i> Add Appointment
+    </h2>
+
+    <form action="/appointments/add" method="POST">
+
+        <!-- Select Patient -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Select Patient</label>
+            <select name="patientId" id="patientSelect" class="form-control" required>
+                <option value="">Loading patients...</option>
+            </select>
+        </div>
+
+        <!-- Select Doctor -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Select Doctor</label>
+            <select name="doctorId" id="doctorSelect" class="form-control" required>
+                <option value="">Loading doctors...</option>
+            </select>
+        </div>
+
+        <!-- Select Date -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Choose Appointment Date</label>
+            <input type="date" name="date" class="form-control" required>
+        </div>
+
+        <button class="btn btn-primary w-100 mt-2" type="submit">
+            <i class="bi bi-check-circle-fill"></i> Create Appointment
+        </button>
+
+        <a href="/viewAppointments.html" class="btn btn-outline-secondary w-100 mt-3">
+            <i class="bi bi-arrow-left-circle"></i> View Appointments
+        </a>
+
+    </form>
+</div>
+
+<script>
+/* Load Dropdown Data (Clean Version) */
+async function loadDropdowns() {
+
+    // Load Patients
+    try {
+        const pRes = await fetch('/patients');
+        const patients = await pRes.json();
+        const pSelect = document.getElementById('patientSelect');
+        pSelect.innerHTML = '<option value="">Select Patient</option>';
+
+        patients.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p._id;
+            option.textContent = `${p.name} (${p.disease || "No disease"})`;
+            pSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.log("Patient fetch error:", err);
+    }
+
+    // Load Doctors
+    try {
+        const dRes = await fetch('/doctors');
+        const doctors = await dRes.json();
+        const dSelect = document.getElementById('doctorSelect');
+        dSelect.innerHTML = '<option value="">Select Doctor</option>';
+
+        doctors.forEach(d => {
+            const option = document.createElement('option');
+            option.value = d._id;
+            option.textContent = `${d.name} (${d.specialization})`;
+            dSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.log("Doctor fetch error:", err);
+    }
+}
+
+window.onload = loadDropdowns;
+</script>
+
+</body>
+</html>
