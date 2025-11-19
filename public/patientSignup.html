@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patient Signup | HMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+      padding: 40px 20px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .signup-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .signup-header .icon {
+      font-size: 3.5rem;
+      color: #8b5cf6;
+      margin-bottom: 15px;
+    }
+
+    .signup-header h2 {
+      font-weight: 700;
+      color: #333;
+    }
+
+    .form-control, .form-select {
+      height: 50px;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    textarea.form-control {
+      height: auto;
+    }
+
+    .btn-signup {
+      width: 100%;
+      height: 55px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      border: none;
+      margin-top: 20px;
+    }
+
+    .btn-signup:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(139, 92, 246, 0.4);
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .login-link a {
+      color: #8b5cf6;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-weight: 600;
+      color: #8b5cf6;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #8b5cf6;
+      padding-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-container">
+    <div class="signup-header">
+      <div class="icon">
+        <i class="bi bi-person-plus-fill"></i>
+      </div>
+      <h2>Patient Registration</h2>
+      <p class="text-muted">Create your account to book appointments</p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="section-title">Personal Information</div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="name" class="form-control" placeholder="Enter your full name">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Email Address *</label>
+        <input type="email" id="email" class="form-control" placeholder="your.email@example.com">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Password *</label>
+        <input type="password" id="password" class="form-control" placeholder="Create a strong password">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" id="phone" class="form-control" placeholder="+91 1234567890">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Age</label>
+        <input type="number" id="age" class="form-control" placeholder="Age">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Gender</label>
+        <select id="gender" class="form-select">
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Blood Group</label>
+        <select id="bloodGroup" class="form-select">
+          <option value="">Select</option>
+          <option value="A+">A+</option>
+          <option value="A-">A-</option>
+          <option value="B+">B+</option>
+          <option value="B-">B-</option>
+          <option value="AB+">AB+</option>
+          <option value="AB-">AB-</option>
+          <option value="O+">O+</option>
+          <option value="O-">O-</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-title">Location Details</div>
+
+    <div class="mb-3">
+      <label class="form-label">Address *</label>
+      <textarea id="address" class="form-control" rows="2" placeholder="Enter your full address"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">City *</label>
+        <input type="text" id="city" class="form-control" placeholder="City">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">State *</label>
+        <input type="text" id="state" class="form-control" placeholder="State">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Pincode</label>
+        <input type="text" id="pincode" class="form-control" placeholder="Pincode">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Latitude (Auto-detect)</label>
+        <input type="text" id="latitude" class="form-control" placeholder="Auto-filled" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Longitude (Auto-detect)</label>
+        <input type="text" id="longitude" class="form-control" placeholder="Auto-filled" readonly>
+      </div>
+    </div>
+
+    <button class="btn btn-sm btn-outline-primary" onclick="getLocation()">
+      <i class="bi bi-geo-alt-fill"></i> Detect My Location
+    </button>
+
+    <button class="btn btn-primary btn-signup" onclick="handleSignup()">
+      <i class="bi bi-check-circle-fill"></i> Create Account
+    </button>
+
+    <div class="login-link">
+      <p>Already have an account? <a href="/patientLoginNew.html">Login Here</a></p>
+    </div>
+  </div>
+
+  <script>
+    function showAlert(message, type = 'danger') {
+      const alertBox = document.getElementById('alertBox');
+      alertBox.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      window.scrollTo(0, 0);
+    }
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
+            showAlert('Location detected successfully!', 'success');
+          },
+          (error) => {
+            showAlert('Unable to detect location. Please enter manually.', 'warning');
+          }
+        );
+      } else {
+        showAlert('Geolocation is not supported by your browser', 'warning');
+      }
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const phone = document.getElementById('phone').value.trim();
+      const age = document.getElementById('age').value;
+      const gender = document.getElementById('gender').value;
+      const address = document.getElementById('address').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const state = document.getElementById('state').value.trim();
+      const latitude = document.getElementById('latitude').value;
+      const longitude = document.getElementById('longitude').value;
+
+      // Validation
+      if (!name || !email || !password || !phone || !address || !city || !state) {
+        showAlert('Please fill in all required fields marked with *');
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('Password must be at least 6 characters long');
+        return;
+      }
+
+      if (!latitude || !longitude) {
+        showAlert('Please click "Detect My Location" or enter coordinates manually');
+        return;
+      }
+
+      try {
+        const response = await fetch('/auth/patient/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name, email, password, phone, age, gender,
+            address, city, state, latitude, longitude
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('Registration successful! Redirecting to login...', 'success');
+          setTimeout(() => {
+            window.location.href = '/patientLoginNew.html';
+          }, 2000);
+        } else {
+          showAlert(data.error || 'Registration failed');
+        }
+      } catch (err) {
+        console.error('Signup error:', err);
+        showAlert('Network error. Please try again.');
+      }
+    }
+
+    // Auto-detect location on page load
+    window.onload = () => {
+      getLocation();
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

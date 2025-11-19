@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Registration | HMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      padding: 40px 20px;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .signup-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .signup-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .signup-header .icon {
+      font-size: 3.5rem;
+      color: #10b981;
+      margin-bottom: 15px;
+    }
+
+    .signup-header h2 {
+      font-weight: 700;
+      color: #333;
+    }
+
+    .form-control, .form-select {
+      height: 50px;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    textarea.form-control {
+      height: auto;
+    }
+
+    .btn-signup {
+      width: 100%;
+      height: 55px;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #10b981, #059669);
+      border: none;
+      margin-top: 20px;
+    }
+
+    .section-title {
+      font-weight: 600;
+      color: #10b981;
+      margin-top: 25px;
+      margin-bottom: 15px;
+      border-bottom: 2px solid #10b981;
+      padding-bottom: 5px;
+    }
+
+    .availability-day {
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 15px;
+      background: #f8f9fa;
+    }
+
+    .time-slot {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .info-box {
+      background: #d1fae5;
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-container">
+    <div class="signup-header">
+      <div class="icon">
+        <i class="bi bi-person-badge-fill"></i>
+      </div>
+      <h2>Doctor Registration</h2>
+      <p class="text-muted">Join our healthcare platform</p>
+    </div>
+
+    <div class="info-box">
+      <small><i class="bi bi-shield-check"></i> Your profile will be reviewed and verified by admin within 24-48 hours</small>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="section-title">Personal Information</div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Full Name *</label>
+        <input type="text" id="name" class="form-control" placeholder="Dr. John Doe">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Email Address *</label>
+        <input type="email" id="email" class="form-control" placeholder="doctor@example.com">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Password *</label>
+        <input type="password" id="password" class="form-control" placeholder="Create strong password">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Phone Number *</label>
+        <input type="tel" id="phone" class="form-control" placeholder="+91 1234567890">
+      </div>
+    </div>
+
+    <div class="section-title">Professional Details</div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Specialization *</label>
+        <select id="specialization" class="form-select">
+          <option value="">Select Specialization</option>
+          <option value="Cardiology">Cardiology</option>
+          <option value="Dermatology">Dermatology</option>
+          <option value="Neurology">Neurology</option>
+          <option value="Orthopedics">Orthopedics</option>
+          <option value="Pediatrics">Pediatrics</option>
+          <option value="Psychiatry">Psychiatry</option>
+          <option value="General Medicine">General Medicine</option>
+          <option value="ENT">ENT</option>
+          <option value="Ophthalmology">Ophthalmology</option>
+          <option value="Gynecology">Gynecology</option>
+          <option value="Dentistry">Dentistry</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Medical Registration Number *</label>
+        <input type="text" id="registrationNumber" class="form-control" placeholder="MCI/State Registration No">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Qualifications *</label>
+        <input type="text" id="qualifications" class="form-control" placeholder="MBBS, MD, etc.">
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Years of Experience *</label>
+        <input type="number" id="experience" class="form-control" placeholder="Years">
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label">Consultation Fee (₹) *</label>
+      <input type="number" id="consultationFee" class="form-control" placeholder="Enter consultation fee">
+    </div>
+
+    <div class="section-title">Clinic Location</div>
+
+    <div class="mb-3">
+      <label class="form-label">Clinic Address *</label>
+      <textarea id="address" class="form-control" rows="2" placeholder="Enter clinic address"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label class="form-label">City *</label>
+        <input type="text" id="city" class="form-control" placeholder="City">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">State *</label>
+        <input type="text" id="state" class="form-control" placeholder="State">
+      </div>
+
+      <div class="col-md-4 mb-3">
+        <label class="form-label">Pincode</label>
+        <input type="text" id="pincode" class="form-control" placeholder="Pincode">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Latitude *</label>
+        <input type="text" id="latitude" class="form-control" placeholder="Auto-detect" readonly>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Longitude *</label>
+        <input type="text" id="longitude" class="form-control" placeholder="Auto-detect" readonly>
+      </div>
+    </div>
+
+    <button class="btn btn-sm btn-outline-success mb-3" onclick="getLocation()">
+      <i class="bi bi-geo-alt-fill"></i> Detect Clinic Location
+    </button>
+
+    <div class="section-title">Availability Schedule</div>
+
+    <div id="availabilityContainer">
+      <div class="availability-day">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" value="Monday" id="monday">
+          <label class="form-check-label fw-bold" for="monday">Monday</label>
+        </div>
+        <div id="monday-slots"></div>
+        <button class="btn btn-sm btn-outline-primary" onclick="addTimeSlot('monday')">+ Add Time Slot</button>
+      </div>
+
+      <div class="availability-day">
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="checkbox" value="Tuesday" id="tuesday">
+          <label class="form-check-label fw-bold" for="tuesday">Tuesday</label>
+        </div>
+        <div id="tuesday-slots"></div>
+        <button class="btn btn-sm btn-outline-primary" onclick="addTimeSlot('tuesday')">+ Add Time Slot</button>
+      </div>
+
+      <!-- Add more days similarly -->
+    </div>
+
+    <div class="section-title">Upload Documents</div>
+
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Medical License/Certificate *</label>
+        <input type="file" id="proofDocument" class="form-control" accept=".pdf,.jpg,.jpeg,.png">
+        <small class="text-muted">PDF, JPG, PNG (Max 5MB)</small>
+      </div>
+
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Profile Photo</label>
+        <input type="file" id="profilePhoto" class="form-control" accept=".jpg,.jpeg,.png">
+        <small class="text-muted">JPG, PNG (Max 2MB)</small>
+      </div>
+    </div>
+
+    <button class="btn btn-success btn-signup" onclick="handleSignup()">
+      <i class="bi bi-check-circle-fill"></i> Submit Registration
+    </button>
+
+    <div class="text-center mt-3">
+      <p>Already registered? <a href="/doctorLogin.html" style="color: #10b981; font-weight: 600;">Login Here</a></p>
+    </div>
+  </div>
+
+  <script>
+    let availability = {};
+
+    function showAlert(message, type = 'danger') {
+      const alertBox = document.getElementById('alertBox');
+      alertBox.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+      window.scrollTo(0, 0);
+    }
+
+    function getLocation() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            document.getElementById('latitude').value = position.coords.latitude;
+            document.getElementById('longitude').value = position.coords.longitude;
+            showAlert('Location detected successfully!', 'success');
+          },
+          (error) => {
+            showAlert('Unable to detect location. Please enter manually.', 'warning');
+          }
+        );
+      }
+    }
+
+    function addTimeSlot(day) {
+      const container = document.getElementById(`${day}-slots`);
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'time-slot';
+      slotDiv.innerHTML = `
+        <input type="time" class="form-control" placeholder="Start Time">
+        <span>to</span>
+        <input type="time" class="form-control" placeholder="End Time">
+        <button class="btn btn-sm btn-danger" onclick="this.parentElement.remove()">×</button>
+      `;
+      container.appendChild(slotDiv);
+    }
+
+    function collectAvailability() {
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+      const availabilityData = [];
+
+      days.forEach(day => {
+        const checkbox = document.getElementById(day);
+        if (checkbox && checkbox.checked) {
+          const slotsContainer = document.getElementById(`${day}-slots`);
+          const slots = [];
+          
+          slotsContainer.querySelectorAll('.time-slot').forEach(slotDiv => {
+            const inputs = slotDiv.querySelectorAll('input[type="time"]');
+            if (inputs.length === 2 && inputs[0].value && inputs[1].value) {
+              slots.push({
+                startTime: inputs[0].value,
+                endTime: inputs[1].value,
+                isBooked: false
+              });
+            }
+          });
+
+          if (slots.length > 0) {
+            availabilityData.push({
+              day: day.charAt(0).toUpperCase() + day.slice(1),
+              slots: slots
+            });
+          }
+        }
+      });
+
+      return availabilityData;
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const phone = document.getElementById('phone').value.trim();
+      const specialization = document.getElementById('specialization').value;
+      const registrationNumber = document.getElementById('registrationNumber').value.trim();
+      const qualifications = document.getElementById('qualifications').value.trim();
+      const experience = document.getElementById('experience').value;
+      const consultationFee = document.getElementById('consultationFee').value;
+      const address = document.getElementById('address').value.trim();
+      const city = document.getElementById('city').value.trim();
+      const state = document.getElementById('state').value.trim();
+      const latitude = document.getElementById('latitude').value;
+      const longitude = document.getElementById('longitude').value;
+
+      // Validation
+      if (!name || !email || !password || !phone || !specialization || !registrationNumber || 
+          !qualifications || !experience || !consultationFee || !address || !city || !state) {
+        showAlert('Please fill in all required fields');
+        return;
+      }
+
+      if (!latitude || !longitude) {
+        showAlert('Please detect your clinic location');
+        return;
+      }
+
+      const proofDocument = document.getElementById('proofDocument').files[0];
+      if (!proofDocument) {
+        showAlert('Please upload your medical license/certificate');
+        return;
+      }
+
+      const availabilityData = collectAvailability();
+      if (availabilityData.length === 0) {
+        showAlert('Please add at least one availability time slot');
+        return;
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('name', name);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('phone', phone);
+      formData.append('specialization', specialization);
+      formData.append('registrationNumber', registrationNumber);
+      formData.append('qualifications', qualifications);
+      formData.append('experience', experience);
+      formData.append('consultationFee', consultationFee);
+      formData.append('address', address);
+      formData.append('city', city);
+      formData.append('state', state);
+      formData.append('latitude', latitude);
+      formData.append('longitude', longitude);
+      formData.append('availability', JSON.stringify(availabilityData));
+      formData.append('proofDocument', proofDocument);
+
+      const profilePhoto = document.getElementById('profilePhoto').files[0];
+      if (profilePhoto) {
+        formData.append('profilePhoto', profilePhoto);
+      }
+
+      try {
+        const response = await fetch('/auth/doctor/signup', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('Registration successful! Your profile will be verified within 24-48 hours.', 'success');
+          setTimeout(() => {
+            window.location.href = '/doctorLogin.html';
+          }, 3000);
+        } else {
+          showAlert(data.error || 'Registration failed');
+        }
+      } catch (err) {
+        console.error('Signup error:', err);
+        showAlert('Network error. Please try again.');
+      }
+    }
+
+    // Auto-detect location on page load
+    window.onload = () => {
+      getLocation();
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

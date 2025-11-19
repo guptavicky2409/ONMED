@@ -97,6 +97,13 @@ router.get("/all", async (req, res) => {
   const patients = await Patient.find({});
   res.json(patients);
 });
+// -----------------------------------------------------
+// 9) GET ALL PATIENTS (alternative endpoint for compatibility)
+// -----------------------------------------------------
+router.get("/", async (req, res) => {
+  const patients = await Patient.find({});
+  res.json(patients);
+});
 
 // -----------------------------------------------------
 // 8) DELETE PATIENT
