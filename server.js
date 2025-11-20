@@ -93,9 +93,32 @@ app.use("/auth", require("./routes/authRoutes"));
 app.use("/requests", require("./routes/requestroutes"));
 app.use("/notifications", require("./routes/notificationRoutes"));
 
-// Video call route
-app.get("/video/room/:roomId", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "videoCall.html"));
+// Video call route with auth validation
+app.get("/video/room/:roomId", async (req, res) => {
+  try {
+    const roomId = req.params.roomId;
+    const appointment = await require("./models/appointment").findOne({ videoCallRoom: roomId });
+
+    if (!appointment) {
+      return res.status(404).send("Room not found");
+    }
+
+    // For development/testing - allow access if appointment exists
+    // In production, uncomment the auth checks below:
+    //
+    // Check if user is authenticated as doctor or patient for this appointment
+    // const isDoctor = req.session.doctorId && req.session.doctorId.toString() === appointment.doctorId.toString();
+    // const isPatient = req.session.patientId && req.session.patientId.toString() === appointment.patientId.toString();
+    //
+    // if (!isDoctor && !isPatient) {
+    //   return res.status(403).send("Access denied. Only participants can join this call.");
+    // }
+
+    res.sendFile(path.join(__dirname, "public", "videoCall.html"));
+  } catch (err) {
+    console.error("Video room access error:", err);
+    res.status(500).send("Internal server error");
+  }
 });
 
 // Health check

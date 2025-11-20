@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | HMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: white !important;
+    }
+
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .welcome-card {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+
+    .stat-card h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .section-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .doctor-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+    }
+
+    .doctor-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-verified { background: #dbeafe; color: #1d4ed8; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-in-progress { background: #fef3c7; color: #d97706; }
+
+    .btn-verify { background: #10b981; border: none; color: white; }
+    .btn-reject { background: #dc2626; border: none; color: white; }
+    .btn-view { background: #3b82f6; border: none; color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">
+        <i class="bi bi-shield-check"></i> Administrator Panel
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white" id="adminNameDisplay">Administrator</span>
+        <button class="btn btn-outline-light" onclick="handleLogout()">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <div class="dashboard-container">
+
+    <!-- Welcome Section -->
+    <div class="welcome-card">
+      <h2>Welcome, Administrator!</h2>
+      <p class="mb-0">Manage doctors, patients, and system analytics</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="icon text-primary">
+          <i class="bi bi-person-badge"></i>
+        </div>
+        <h3 id="totalDoctors">0</h3>
+        <p class="text-muted mb-0">Total Doctors</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon text-success">
+          <i class="bi bi-person-check"></i>
+        </div>
+        <h3 id="verifiedDoctors">0</h3>
+        <p class="text-muted mb-0">Verified Doctors</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon text-info">
+          <i class="bi bi-people"></i>
+        </div>
+        <h3 id="totalPatients">0</h3>
+        <p class="text-muted mb-0">Total Patients</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="icon text-warning">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h3 id="totalAppointments">0</h3>
+        <p class="text-muted mb-0">Total Appointments</p>
+      </div>
+    </div>
+
+    <!-- Pending Doctor Verifications -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-person-plus-fill text-warning"></i>
+        Pending Doctor Verifications
+      </div>
+      <div id="pendingDoctors" class="d-none">
+        <div id="pendingDoctorsList"></div>
+      </div>
+      <p id="noPendingDoctors" class="text-muted text-center py-4">No pending doctor verifications</p>
+    </div>
+
+    <!-- Doctor Management -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-person-badge-fill text-primary"></i>
+        Doctor Management
+      </div>
+      <div class="mb-3">
+        <input type="text" id="doctorSearch" class="form-control" placeholder="Search doctors by name, email, or specialization...">
+      </div>
+      <div id="doctorsList">
+        <p class="text-muted text-center">Loading doctors...</p>
+      </div>
+    </div>
+
+    <!-- Patient Management -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-people-fill text-success"></i>
+        Patient Management
+      </div>
+      <div class="mb-3">
+        <input type="text" id="patientSearch" class="form-control" placeholder="Search patients by name or email...">
+      </div>
+      <div id="patientsList">
+        <p class="text-muted text-center">Loading patients...</p>
+      </div>
+    </div>
+
+    <!-- Appointment Management -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-calendar2-event text-info"></i>
+        Appointment Management
+      </div>
+
+      <!-- Appointment Filters -->
+      <div class="mb-3">
+        <div class="row g-2">
+          <div class="col-md-3">
+            <select id="appointmentStatusFilter" class="form-select">
+              <option value="">All Status</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <input type="date" id="appointmentDateFilter" class="form-control">
+          </div>
+          <div class="col-md-3">
+            <input type="text" id="appointmentDoctorFilter" class="form-control" placeholder="Doctor name...">
+          </div>
+          <div class="col-md-3">
+            <button class="btn btn-primary" onclick="filterAppointments()">
+              <i class="bi bi-search"></i> Filter
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="appointmentsList" class="table-responsive">
+        <p class="text-muted text-center">Loading appointments...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Doctor Details Modal -->
+  <div class="modal fade" id="doctorModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+          <h5 class="modal-title">Doctor Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="doctorDetails"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patient Details Modal -->
+  <div class="modal fade" id="patientModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: white;">
+          <h5 class="modal-title">Patient Details</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="patientDetails"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Check if logged in
+    async function checkLogin() {
+      try {
+        const response = await fetch('/admin/check');
+        const result = await response.text();
+        if (result === 'NOT_LOGGED_IN') {
+          window.location.href = '/login.html';
+        }
+      } catch (err) {
+        console.error('Auth check error:', err);
+        window.location.href = '/login.html';
+      }
+    }
+
+    // Load dashboard data
+    checkLogin();
+
+    // Global variables
+    let allDoctors = [];
+    let allPatients = [];
+    let allAppointments = [];
+
+    // Initialize dashboard
+    async function initializeDashboard() {
+      await loadStats();
+      await loadPendingDoctors();
+      await loadDoctors();
+      await loadPatients();
+      await loadAppointments();
+    }
+
+    // Load statistics
+    async function loadStats() {
+      try {
+        const [doctorsRes, patientsRes, appointmentsRes] = await Promise.all([
+          fetch('/doctors/'),
+          fetch('/patients/'),
+          fetch('/appointments/count')
+        ]);
+
+        const doctors = await doctorsRes.json();
+        const patients = await patientsRes.json();
+        const appointmentsData = await appointmentsRes.json();
+
+        // Update stats
+        document.getElementById('totalDoctors').textContent = Array.isArray(doctors) ? doctors.length : 0;
+        document.getElementById('verifiedDoctors').textContent = Array.isArray(doctors) ?
+          doctors.filter(d => d.isVerified).length : 0;
+        document.getElementById('totalPatients').textContent = Array.isArray(patients) ? patients.length : 0;
+        document.getElementById('totalAppointments').textContent = appointmentsData.success ? appointmentsData.count : 0;
+
+      } catch (err) {
+        console.error('Load stats error:', err);
+      }
+    }
+
+    // Load pending doctor verifications
+    async function loadPendingDoctors() {
+      try {
+        const response = await fetch('/doctors/');
+        const doctors = await response.json();
+
+        if (Array.isArray(doctors)) {
+          const pendingDoctors = doctors.filter(doctor => !doctor.applicationStatus || doctor.applicationStatus === 'pending');
+          allDoctors = doctors; // Store for search
+
+          if (pendingDoctors.length > 0) {
+            document.getElementById('pendingDoctors').classList.remove('d-none');
+            document.getElementById('noPendingDoctors').classList.add('d-none');
+
+            const container = document.getElementById('pendingDoctorsList');
+            container.innerHTML = pendingDoctors.map(doctor => `
+              <div class="doctor-card">
+                <div class="row">
+                  <div class="col-md-8">
+                    <h5 class="mb-2">Dr. ${doctor.name}</h5>
+                    <p class="text-muted mb-1"><i class="bi bi-envelope"></i> ${doctor.email}</p>
+                    <p class="text-muted mb-1"><i class="bi bi-tag"></i> ${doctor.specialization}</p>
+                    <p class="text-muted mb-2"><i class="bi bi-geo-alt"></i> ${doctor.location.city}</p>
+                    <span class="status-badge status-pending">Pending Verification</span>
+                  </div>
+                  <div class="col-md-4 text-md-end">
+                    <button class="btn btn-verify btn-sm mb-2 me-2" onclick="verifyDoctor('${doctor._id}')">
+                      <i class="bi bi-check-circle"></i> Verify
+                    </button>
+                    <button class="btn btn-reject btn-sm mb-2" onclick="rejectDoctor('${doctor._id}')">
+                      <i class="bi bi-x-circle"></i> Reject
+                    </button>
+                    <br>
+                    <button class="btn btn-view btn-sm" onclick="viewDoctorDetails('${doctor._id}')">
+                      <i class="bi bi-eye"></i> View Details
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.error('Load pending doctors error:', err);
+      }
+    }
+
+    // Load all doctors
+    async function loadDoctors() {
+      // Already loaded in loadPendingDoctors
+      const container = document.getElementById('doctorsList');
+      if (allDoctors.length > 0) {
+        displayDoctors(allDoctors);
+      }
+    }
+
+    // Load all patients
+    async function loadPatients() {
+      try {
+        const response = await fetch('/patients/');
+        const patients = await response.json();
+        allPatients = Array.isArray(patients) ? patients : [];
+
+        displayPatients(allPatients);
+      } catch (err) {
+        console.error('Load patients error:', err);
+        document.getElementById('patientsList').innerHTML = '<p class="text-danger">Error loading patients</p>';
+      }
+    }
+
+    // Load recent appointments
+    async function loadAppointments() {
+      try {
+        const response = await fetch('/appointments/');
+        const appointments = await response.json();
+        allAppointments = Array.isArray(appointments) ? appointments.slice(0, 10) : [];
+
+        displayAppointments(allAppointments);
+      } catch (err) {
+        console.error('Load appointments error:', err);
+        document.getElementById('recentAppointments').innerHTML = '<p class="text-danger">Error loading appointments</p>';
+      }
+    }
+
+    // Display functions
+    function displayDoctors(doctors) {
+      const container = document.getElementById('doctorsList');
+      if (doctors.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No doctors found</p>';
+        return;
+      }
+
+      container.innerHTML = doctors.map(doctor => `
+        <div class="doctor-card">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="mb-2">Dr. ${doctor.name}</h5>
+              <p class="text-muted mb-1"><i class="bi bi-envelope"></i> ${doctor.email}</p>
+              <p class="text-muted mb-1"><i class="bi bi-tag"></i> ${doctor.specialization}</p>
+              <p class="text-muted mb-1"><i class="bi bi-telephone"></i> ${doctor.phone}</p>
+              <span class="status-badge ${doctor.isVerified ? 'status-verified' : 'status-pending'}">
+                ${doctor.isVerified ? 'Verified' : 'Pending'}
+              </span>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <button class="btn btn-view btn-sm" onclick="viewDoctorDetails('${doctor._id}')">
+                <i class="bi bi-eye"></i> View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function displayPatients(patients) {
+      const container = document.getElementById('patientsList');
+      if (patients.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No patients found</p>';
+        return;
+      }
+
+      container.innerHTML = patients.slice(0, 20).map(patient => `
+        <div class="doctor-card">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="mb-2">${patient.name}</h5>
+              <p class="text-muted mb-1"><i class="bi bi-envelope"></i> ${patient.email}</p>
+              <p class="text-muted mb-1"><i class="bi bi-telephone"></i> ${patient.phone}</p>
+              <p class="text-muted mb-1"><i class="bi bi-geo-alt"></i> ${patient.location?.city || 'Location not set'}</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+              <button class="btn btn-view btn-sm" onclick="viewPatientDetails('${patient._id}')">
+                <i class="bi bi-eye"></i> View Details
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function displayAppointments(appointments) {
+      const container = document.getElementById('recentAppointments');
+      if (appointments.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No appointments found</p>';
+        return;
+      }
+
+      container.innerHTML = appointments.map(appt => `
+        <div class="doctor-card">
+          <div class="row">
+            <div class="col-md-8">
+              <h5 class="mb-2">Dr. ${appt.doctorId?.name || 'Unknown'}</h5>
+              <p class="text-muted mb-1">Patient: ${appt.patientId?.name || 'Unknown'}</p>
+              <p class="text-muted mb-1">
+                <i class="bi bi-calendar"></i> ${new Date(appt.scheduledDateTime).toLocaleDateString()}
+                <i class="bi bi-clock ms-3"></i> ${new Date(appt.scheduledDateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </p>
+              <span class="status-badge status-${appt.status.replace(' ', '-')}">${appt.status}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Action functions
+    async function verifyDoctor(doctorId) {
+      if (!confirm('Are you sure you want to verify this doctor?')) return;
+
+      try {
+        const response = await fetch('/admin/doctors/verify/' + doctorId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          alert('Doctor verified successfully!');
+          initializeDashboard(); // Reload everything from server
+        } else {
+          alert('Failed to verify doctor');
+        }
+      } catch (err) {
+        console.error('Verify doctor error:', err);
+        alert('Error verifying doctor');
+      }
+    }
+
+    async function rejectDoctor(doctorId) {
+      if (!confirm('Are you sure you want to reject this doctor\'s application?')) return;
+
+      try {
+        const response = await fetch('/admin/doctors/reject/' + doctorId, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+          alert('Doctor application rejected and removed');
+          initializeDashboard(); // Reload everything from server
+        } else {
+          alert('Failed to reject doctor');
+        }
+      } catch (err) {
+        console.error('Reject doctor error:', err);
+        alert('Error rejecting doctor');
+      }
+    }
+
+    function viewDoctorDetails(doctorId) {
+      const doctor = allDoctors.find(d => d._id === doctorId);
+      if (!doctor) return;
+
+      const modal = new bootstrap.Modal(document.getElementById('doctorModal'));
+      document.getElementById('doctorDetails').innerHTML = `
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>Name:</strong> Dr. ${doctor.name}<br>
+            <strong>Email:</strong> ${doctor.email}<br>
+            <strong>Phone:</strong> ${doctor.phone}<br>
+            <strong>Specialization:</strong> ${doctor.specialization}<br>
+            <strong>Registration:</strong> ${doctor.registrationNumber}<br>
+            <strong>Experience:</strong> ${doctor.experience} years
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Qualifications:</strong> ${doctor.qualifications}<br>
+            <strong>Consultation Fee:</strong> ₹${doctor.consultationFee}<br>
+            <strong>Address:</strong> ${doctor.location?.address || 'N/A'}<br>
+            <strong>City:</strong> ${doctor.location?.city || 'N/A'}<br>
+            <strong>Rating:</strong> ${doctor.rating?.toFixed(1) || 'N/A'}<br>
+            <strong>Status:</strong> ${doctor.isVerified ? 'Verified' : 'Pending'}
+          </div>
+        </div>
+        <div class="mb-3">
+          <strong>Availability:</strong>
+          ${doctor.availability && doctor.availability.length > 0 ?
+            doctor.availability.map(slot => `${slot.day}: ${slot.slots.length} slots`).join(', ') :
+            'Not set'
+          }
+        </div>
+        <div class="mb-3">
+          <strong>Uploaded Documents:</strong><br>
+          ${doctor.proofDocument ? `<a href="/${doctor.proofDocument}" target="_blank" class="btn btn-sm btn-outline-primary me-2">View Proof Document</a>` : '<em>No proof document uploaded</em>'}
+          ${doctor.profilePhoto ? `<a href="/${doctor.profilePhoto}" target="_blank" class="btn btn-sm btn-outline-success">View Profile Photo</a>` : '<em>No profile photo uploaded</em>'}
+        </div>
+      `;
+      modal.show();
+    }
+
+    function viewPatientDetails(patientId) {
+      const patient = allPatients.find(p => p._id === patientId);
+      if (!patient) return;
+
+      const modal = new bootstrap.Modal(document.getElementById('patientModal'));
+      document.getElementById('patientDetails').innerHTML = `
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <strong>Name:</strong> ${patient.name}<br>
+            <strong>Email:</strong> ${patient.email}<br>
+            <strong>Phone:</strong> ${patient.phone}<br>
+            <strong>Age:</strong> ${patient.age || 'N/A'}<br>
+            <strong>Gender:</strong> ${patient.gender || 'N/A'}
+          </div>
+          <div class="col-md-6 mb-3">
+            <strong>Blood Group:</strong> ${patient.bloodGroup || 'N/A'}<br>
+            <strong>Address:</strong> ${patient.location?.address || patient.address || 'N/A'}<br>
+            <strong>City:</strong> ${patient.location?.city || 'N/A'}<br>
+            <strong>State:</strong> ${patient.location?.state || 'N/A'}
+          </div>
+        </div>
+      `;
+      modal.show();
+    }
+
+    // Search functionality
+    document.getElementById('doctorSearch').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const filteredDoctors = allDoctors.filter(doctor =>
+        doctor.name.toLowerCase().includes(searchTerm) ||
+        doctor.email.toLowerCase().includes(searchTerm) ||
+        doctor.specialization.toLowerCase().includes(searchTerm)
+      );
+      displayDoctors(filteredDoctors);
+    });
+
+    document.getElementById('patientSearch').addEventListener('input', function(e) {
+      const searchTerm = e.target.value.toLowerCase();
+      const filteredPatients = allPatients.filter(patient =>
+        patient.name.toLowerCase().includes(searchTerm) ||
+        patient.email.toLowerCase().includes(searchTerm)
+      );
+      displayPatients(filteredPatients);
+    });
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        window.location.href = '/admin/logout';
+      }
+    }
+
+    // Appointment management functions
+    async function loadAppointmentList() {
+      try {
+        const response = await fetch('/appointments/');
+        const appointments = await response.json();
+
+        if (Array.isArray(appointments)) {
+          allAppointments = appointments;
+          filterAppointments(); // Apply any existing filters
+        } else {
+          displayAppointmentTable([]);
+        }
+      } catch (err) {
+        console.error('Load appointments error:', err);
+        document.getElementById('appointmentsList').innerHTML = '<p class="text-danger">Error loading appointments</p>';
+      }
+    }
+
+    function filterAppointments() {
+      let filtered = allAppointments;
+
+      // Status filter
+      const statusFilter = document.getElementById('appointmentStatusFilter').value;
+      if (statusFilter) {
+        filtered = filtered.filter(appt => appt.status === statusFilter);
+      }
+
+      // Date filter
+      const dateFilter = document.getElementById('appointmentDateFilter').value;
+      if (dateFilter) {
+        const filterDate = new Date(dateFilter).toDateString();
+        filtered = filtered.filter(appt => {
+          const apptDate = new Date(appt.scheduledDateTime).toDateString();
+          return apptDate === filterDate;
+        });
+      }
+
+      // Doctor filter
+      const doctorFilter = document.getElementById('appointmentDoctorFilter').value.toLowerCase();
+      if (doctorFilter) {
+        filtered = filtered.filter(appt =>
+          (appt.doctorId?.name || '').toLowerCase().includes(doctorFilter)
+        );
+      }
+
+      displayAppointmentTable(filtered);
+    }
+
+    function displayAppointmentTable(appointments) {
+      const container = document.getElementById('appointmentsList');
+
+      if (appointments.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No appointments found</p>';
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="table table-striped table-hover">
+          <thead class="table-dark">
+            <tr>
+              <th>Patient</th>
+              <th>Doctor</th>
+              <th>Date & Time</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${appointments.map(appt => `
+              <tr>
+                <td>
+                  <strong>${appt.patientId?.name || 'Unknown'}</strong><br>
+                  <small class="text-muted">${appt.patientId?.email || ''}</small>
+                </td>
+                <td>
+                  <strong>Dr. ${appt.doctorId?.name || 'Unknown'}</strong><br>
+                  <small class="text-muted">${appt.doctorId?.specialization || ''}</small>
+                </td>
+                <td>
+                  <div>${new Date(appt.scheduledDateTime).toLocaleDateString()}</div>
+                  <small class="text-muted">${new Date(appt.scheduledDateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
+                </td>
+                <td>
+                  <span class="status-badge status-${appt.status.replace(' ', '-')}">${appt.status}</span>
+                </td>
+                <td>
+                  ${appt.status === 'scheduled' ? `
+                    <button class="btn btn-warning btn-sm me-1" onclick="cancelAppointment('${appt._id}')">
+                      <i class="bi bi-x-circle"></i> Cancel
+                    </button>
+                  ` : ''}
+                  ${appt.status === 'completed' && appt.prescription ? `
+                    <button class="btn btn-info btn-sm" onclick="viewPrescription('${appt._id}')">
+                      <i class="bi bi-file-earmark-text"></i> Prescription
+                    </button>
+                  ` : ''}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    async function cancelAppointment(appointmentId) {
+      if (!confirm('Are you sure you want to cancel this appointment?')) return;
+
+      try {
+        const response = await fetch(`/appointments/${appointmentId}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Appointment cancelled successfully');
+          loadAppointmentList(); // Reload the appointment list
+        } else {
+          alert(data.error || 'Failed to cancel appointment');
+        }
+      } catch (err) {
+        console.error('Cancel appointment error:', err);
+        alert('Network error');
+      }
+    }
+
+    function viewPrescription(appointmentId) {
+      window.open(`/appointments/prescription/download/${appointmentId}`, '_blank');
+    }
+
+    // Update initializeDashboard to load appointments
+    initializeDashboard = async function() {
+      await loadStats();
+      await loadPendingDoctors();
+      await loadDoctors();
+      await loadPatients();
+      await loadAppointmentList();
+    }
+
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', initializeDashboard);
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>

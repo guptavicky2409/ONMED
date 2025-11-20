@@ -97,8 +97,9 @@ router.get("/all", async (req, res) => {
   const patients = await Patient.find({});
   res.json(patients);
 });
+
 // -----------------------------------------------------
-// 9) GET ALL PATIENTS (alternative endpoint for compatibility)
+// 8) GET ALL PATIENTS (alternative endpoint for compatibility)
 // -----------------------------------------------------
 router.get("/", async (req, res) => {
   const patients = await Patient.find({});
@@ -106,7 +107,21 @@ router.get("/", async (req, res) => {
 });
 
 // -----------------------------------------------------
-// 8) DELETE PATIENT
+// 9) GET SINGLE PATIENT BY ID
+// -----------------------------------------------------
+router.get("/:id", async (req, res) => {
+  try {
+    const patient = await Patient.findById(req.params.id);
+    if (!patient) return res.status(404).json({ error: "Patient not found" });
+
+    res.json({ success: true, patient });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// -----------------------------------------------------
+// 10) DELETE PATIENT
 // -----------------------------------------------------
 router.delete("/:id", async (req, res) => {
   try {
@@ -117,6 +132,57 @@ router.delete("/:id", async (req, res) => {
     res.json({ success: true, message: "Patient deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Update patient profile (allow patients to edit their profile)
+router.put("/profile", require("../middleware/auth").patientAuth, async (req, res) => {
+  try {
+    const patientId = req.session.patientId;
+    const updates = req.body;
+
+    // Fields that patients can update
+    const allowedFields = [
+      "name", "phone", "age", "gender", "address", "location", "medicalHistory"
+    ];
+
+    // Filter updates to only allowed fields
+    const filteredUpdates = {};
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        filteredUpdates[field] = updates[field];
+      }
+    }
+
+    const updatedPatient = await Patient.findByIdAndUpdate(
+      patientId,
+      filteredUpdates,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedPatient) {
+      return res.status(404).json({ error: "Patient not found" });
+    }
+
+    res.json({ success: true, message: "Profile updated successfully", patient: updatedPatient });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get patient profile for editing
+router.get("/profile/:patientId", require("../middleware/auth").patientAuth, async (req, res) => {
+  try {
+    const patientId = req.params.patientId;
+    const patient = await Patient.findById(patientId).select("-password");
+
+    if (!patient) {
+      return res.status(404).json({ error: "Patient not found" });
+    }
+
+    res.json({ success: true, patient });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

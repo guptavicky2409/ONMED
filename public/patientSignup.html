@@ -183,19 +183,25 @@
 
     <div class="row">
       <div class="col-md-6 mb-3">
-        <label class="form-label">Latitude (Auto-detect)</label>
-        <input type="text" id="latitude" class="form-control" placeholder="Auto-filled" readonly>
+        <label class="form-label">Latitude *</label>
+        <input type="text" id="latitude" class="form-control" placeholder="Auto-detected or enter manually">
       </div>
 
       <div class="col-md-6 mb-3">
-        <label class="form-label">Longitude (Auto-detect)</label>
-        <input type="text" id="longitude" class="form-control" placeholder="Auto-filled" readonly>
+        <label class="form-label">Longitude *</label>
+        <input type="text" id="longitude" class="form-control" placeholder="Auto-detected or enter manually">
       </div>
     </div>
 
-    <button class="btn btn-sm btn-outline-primary" onclick="getLocation()">
-      <i class="bi bi-geo-alt-fill"></i> Detect My Location
-    </button>
+    <div class="mb-3">
+      <button class="btn btn-sm btn-outline-primary me-2" onclick="getLocation()">
+        <i class="bi bi-geo-alt-fill"></i> Detect My Location
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" onclick="toggleManualEntry()">
+        <i class="bi bi-pencil-fill"></i> Enter Manually
+      </button>
+      <small id="locationHelp" class="text-muted ms-3">Click detect or enter your coordinates manually</small>
+    </div>
 
     <button class="btn btn-primary btn-signup" onclick="handleSignup()">
       <i class="bi bi-check-circle-fill"></i> Create Account
@@ -290,8 +296,31 @@
       }
     }
 
+    function toggleManualEntry() {
+      const latField = document.getElementById('latitude');
+      const lonField = document.getElementById('longitude');
+      const helpText = document.getElementById('locationHelp');
+
+      latField.readOnly = !latField.readOnly;
+      lonField.readOnly = !lonField.readOnly;
+
+      if (latField.readOnly) {
+        helpText.textContent = 'Coordinates are auto-filled. Click "Enter Manually" to edit.';
+        latField.placeholder = 'Auto-filled';
+        lonField.placeholder = 'Auto-filled';
+      } else {
+        helpText.textContent = 'Enter latitude and longitude manually.';
+        latField.placeholder = 'Enter latitude (e.g., 28.6139)';
+        lonField.placeholder = 'Enter longitude (e.g., 77.2090)';
+        latField.focus();
+      }
+    }
+
     // Auto-detect location on page load
     window.onload = () => {
+      // Start with readonly enabled
+      document.getElementById('latitude').readOnly = true;
+      document.getElementById('longitude').readOnly = true;
       getLocation();
     };
   </script>

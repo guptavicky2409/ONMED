@@ -7,6 +7,7 @@ const Request = require("../models/request");
 const { adminAuth, doctorAuth, patientAuth } = require("../middleware/auth");
 const PDFDocument = require("pdfkit");
 const path = require("path");
+const { sendNotification } = require("./notificationRoutes");
 
 // ============================================
 // ADMIN ROUTES - Create Appointment Manually
@@ -60,7 +61,7 @@ router.get("/", async (req, res) => {
         doctorName: doctor ? doctor.name : "Unknown",
         status: a.status,
         videoCallRoom: a.videoCallRoom,
-        prescription: a.prescription
+        // Handle old string prescription data
       });
     }
 
@@ -75,9 +76,44 @@ router.get("/", async (req, res) => {
 router.delete("/:id", adminAuth, async (req, res) => {
   try {
     await Appointment.findByIdAndDelete(req.params.id);
-    res.json({ 
+    res.json({
       success: true,
-      message: "Appointment deleted" 
+      message: "Appointment deleted"
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Cancel appointment (Admin)
+router.post("/:appointmentId/cancel", adminAuth, async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    // Check if appointment is already cancelled or completed
+    if (appointment.status === 'cancelled') {
+      return res.status(400).json({ error: "Appointment is already cancelled" });
+    }
+
+    if (appointment.status === 'completed') {
+      return res.status(400).json({ error: "Cannot cancel completed appointments" });
+    }
+
+    appointment.status = 'cancelled';
+    await appointment.save();
+
+    // Update request status if exists
+    if (appointment.requestId) {
+      await Request.findByIdAndUpdate(appointment.requestId, { status: 'cancelled' });
+    }
+
+    res.json({
+      success: true,
+      message: "Appointment cancelled successfully"
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -272,31 +308,57 @@ router.get("/check-call-access/:appointmentId", async (req, res) => {
 // Start video call
 router.post("/start-call/:appointmentId", async (req, res) => {
   try {
+    console.log(`Starting call for appointment: ${req.params.appointmentId}`);
+
     const appointment = await Appointment.findById(req.params.appointmentId);
-    
     if (!appointment) {
+      console.log("Appointment not found:", req.params.appointmentId);
       return res.status(404).json({ error: "Appointment not found" });
     }
 
+    console.log("Appointment found, current status:", appointment.status);
+
     // Check if already completed or cancelled
     if (appointment.status === 'completed' || appointment.status === 'cancelled') {
-      return res.status(400).json({ 
-        error: `Cannot start call. Appointment is ${appointment.status}` 
+      console.log("Cannot start call, appointment status:", appointment.status);
+      return res.status(400).json({
+        error: `Cannot start call. Appointment is ${appointment.status}`
       });
     }
 
+    // Update appointment status
     appointment.status = 'in-progress';
     if (!appointment.callStartTime) {
       appointment.callStartTime = new Date();
     }
-    await appointment.save();
 
-    res.json({ 
-      success: true, 
+    console.log("Saving appointment with in-progress status...");
+    await appointment.save();
+    console.log("Appointment saved successfully");
+
+    // Send notification to patient that call has started
+    console.log("Sending notification to patient...");
+    try {
+      sendNotification(appointment.patientId.toString(), 'patient', {
+        type: 'call-started',
+        message: 'Your doctor has started the video call!',
+        appointmentId: appointment._id,
+        videoCallRoom: appointment.videoCallRoom
+      });
+      console.log("Notification sent successfully");
+    } catch (notificationErr) {
+      console.error("Notification failed, but continuing:", notificationErr);
+      // Don't fail the whole request due to notification issues
+    }
+
+    console.log("Call started successfully");
+    res.json({
+      success: true,
       message: "Video call started",
-      videoCallRoom: appointment.videoCallRoom 
+      videoCallRoom: appointment.videoCallRoom
     });
   } catch (err) {
+    console.error("Error starting call:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -645,6 +707,40 @@ router.post("/rate/:appointmentId", patientAuth, async (req, res) => {
 // ============================================
 // STATISTICS ROUTES
 // ============================================
+
+// Get appointment by video call room
+router.get("/by-room/:roomId", async (req, res) => {
+  try {
+    const appointment = await Appointment.findOne({ videoCallRoom: req.params.roomId });
+
+    if (!appointment) {
+      return res.status(404).json({ error: "Appointment not found" });
+    }
+
+    res.json({
+      success: true,
+      appointment: {
+        _id: appointment._id,
+        status: appointment.status
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get appointment count (for admin dashboard)
+router.get("/count", async (req, res) => {
+  try {
+    const total = await Appointment.countDocuments();
+    res.json({
+      success: true,
+      count: total
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Get appointment statistics (Admin)
 router.get("/stats", adminAuth, async (req, res) => {

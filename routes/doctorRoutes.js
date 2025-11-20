@@ -3,8 +3,9 @@ const router = express.Router();
 const Doctor = require("../models/doctor");
 const path = require("path");
 const Appointment = require("../models/appointment");
+const Request = require("../models/request");
 const PDFDocument = require("pdfkit");
-const auth = require("../middleware/auth");
+const { doctorAuth, patientAuth, adminAuth } = require("../middleware/auth");
 
 
 
@@ -21,7 +22,7 @@ router.post("/add", async (req, res) => {
   res.json({ message: "Doctor added", doctor: newDoctor });
 });
 
-router.get("/appointments", auth, async (req, res) => {
+router.get("/appointments", adminAuth, async (req, res) => {
     const list = await Appointment.find();
     res.json(list);
 });
@@ -118,10 +119,114 @@ router.get("/receipt/:appointmentId", async (req, res) => {
   }
 });
 
-router.get("/list", auth, async (req, res) => {
+router.get("/list", adminAuth, async (req, res) => {
   const doctors = await Doctor.find();
   res.json(doctors);
 });
 
+// ============ GET DOCTOR STATS ============
+router.get("/stats/:doctorId", async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    // Get pending requests count
+    const pendingRequests = await Request.countDocuments({
+      doctorId,
+      status: 'pending'
+    });
+
+    // Get today's appointments
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayAppointments = await Appointment.countDocuments({
+      doctorId,
+      scheduledDateTime: { $gte: today, $lt: tomorrow },
+      status: { $in: ['scheduled', 'in-progress'] }
+    });
+
+    // Get completed this month
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const completedThisMonth = await Appointment.countDocuments({
+      doctorId,
+      status: 'completed',
+      scheduledDateTime: { $gte: monthStart }
+    });
+
+    res.json({
+      success: true,
+      stats: {
+        pendingRequests,
+        todayAppointments,
+        completedThisMonth,
+        rating: doctor.rating || 0,
+        totalRatings: doctor.totalRatings || 0
+      }
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update doctor profile (allow doctors to edit their profile including availability)
+router.put("/profile", doctorAuth, async (req, res) => {
+  try {
+    const doctorId = req.session.doctorId;
+    const updates = req.body;
+
+    // Fields that doctors can update
+    const allowedFields = [
+      "name", "phone", "specialization", "qualifications", "experience",
+      "registrationNumber", "profilePhoto", "location", "availability",
+      "consultationFee"
+    ];
+
+    // Filter updates to only allowed fields
+    const filteredUpdates = {};
+    for (const field of allowedFields) {
+      if (updates[field] !== undefined) {
+        filteredUpdates[field] = updates[field];
+      }
+    }
+
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      doctorId,
+      filteredUpdates,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedDoctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    res.json({ success: true, message: "Profile updated successfully", doctor: updatedDoctor });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get doctor profile for editing
+router.get("/profile/:doctorId", doctorAuth, async (req, res) => {
+  try {
+    const doctorId = req.params.doctorId;
+    const doctor = await Doctor.findById(doctorId).select("-password");
+
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    res.json({ success: true, doctor });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

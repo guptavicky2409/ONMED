@@ -120,6 +120,24 @@
       text-align: center;
     }
 
+    .calling {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      text-align: center;
+      background: rgba(0,0,0,0.8);
+      padding: 30px;
+      border-radius: 15px;
+      min-width: 300px;
+    }
+
+    .calling h3 {
+      margin-bottom: 15px;
+      color: #10b981;
+    }
+
     .spinner {
       border: 4px solid rgba(255,255,255,0.3);
       border-top: 4px solid white;
@@ -137,7 +155,14 @@
 </head>
 <body>
 
-  <div class="status" id="status">Connecting...</div>
+    <div class="status" id="status">Connecting...</div>
+
+    <!-- Debug Panel (visible for testing) -->
+    <div style="position: fixed; top: 20px; left: 20px; font-size: 12px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
+      <div id="debugInfo">Initializing...</div>
+      <button onclick="forceOfferCreation()" style="margin-top: 5px; font-size: 11px;">Force Offer</button>
+      <button onclick="forceAnswerCreation()" style="margin-top: 5px; font-size: 11px;">Force Answer</button>
+    </div>
 
   <div class="video-container">
     <div class="video-wrapper">
@@ -148,9 +173,17 @@
     <div class="video-wrapper">
       <div class="video-label">Remote User</div>
       <video id="remoteVideo" autoplay playsinline></video>
-      <div class="waiting" id="waiting">
+      <div class="waiting" id="waiting" style="display: none;">
         <div class="spinner"></div>
         <p>Waiting for the other person to join...</p>
+      </div>
+
+      <!-- Calling UI for when initiating call -->
+      <div class="calling" id="callingUI" style="display: none;">
+        <div class="spinner"></div>
+        <h3>Calling...</h3>
+        <p>Waiting for the other person to answer</p>
+        <button class="btn btn-secondary mt-3" onclick="cancelCall()">Cancel</button>
       </div>
     </div>
   </div>
@@ -171,6 +204,7 @@
   <script>
     const socket = io();
     const roomId = window.location.pathname.split("/").pop();
+    let appointmentId = null;
 
     let localStream;
     let remoteStream;
@@ -178,25 +212,67 @@
     let audioEnabled = true;
     let videoEnabled = true;
 
-    const servers = { 
+    // STUN only - works for same network, use localhost for testing
+    const servers = {
       iceServers: [
         { urls: "stun:stun.l.google.com:19302" },
         { urls: "stun:stun1.l.google.com:19302" }
-      ] 
+        // TURN servers commented out for testing
+        // Add back when testing across different networks
+        /*
+        {
+          urls: 'turn:openrelay.metered.ca:80',
+          username: "openrelayproject",
+          credential: "openrelayproject"
+        }
+        */
+      ]
     };
+
+    // Get appointment ID from room ID
+    async function getAppointmentId() {
+      try {
+        const response = await fetch('/appointments/by-room/' + roomId);
+        const data = await response.json();
+        if (data.success) {
+          appointmentId = data.appointment._id;
+          console.log("Appointment ID:", appointmentId);
+          await startCall();
+        } else {
+          console.error("Failed to get appointment ID");
+          alert("Appointment not found");
+          window.close();
+        }
+      } catch (err) {
+        console.error("Error getting appointment ID:", err);
+        alert("Error loading appointment");
+        window.close();
+      }
+    }
 
     // Start call
     async function startCall() {
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ 
-          video: true, 
-          audio: true 
+        console.log("Requesting camera/microphone access...");
+
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+
+        console.log("Local stream obtained:", {
+          videoTracks: localStream.getVideoTracks().length,
+          audioTracks: localStream.getAudioTracks().length,
+          videoTrackEnabled: localStream.getVideoTracks()[0]?.enabled,
+          audioTrackEnabled: localStream.getAudioTracks()[0]?.enabled
         });
 
         document.getElementById("localVideo").srcObject = localStream;
-        document.getElementById("status").textContent = "Connected";
+        document.getElementById("status").textContent = "Connected - Local stream ready";
 
         peerConnection = new RTCPeerConnection(servers);
+
+        console.log("PeerConnection created with TURN servers");
 
         remoteStream = new MediaStream();
         document.getElementById("remoteVideo").srcObject = remoteStream;
@@ -220,10 +296,48 @@
 
         peerConnection.onconnectionstatechange = () => {
           console.log("Connection state:", peerConnection.connectionState);
-          document.getElementById("status").textContent = 
-            peerConnection.connectionState.charAt(0).toUpperCase() + 
-            peerConnection.connectionState.slice(1);
+          const state = peerConnection.connectionState;
+          let statusText = state.charAt(0).toUpperCase() + state.slice(1);
+
+          // Provide more user-friendly messages
+          if (state === "connecting") {
+            statusText = "Connecting...";
+          } else if (state === "connected") {
+            statusText = "Connected";
+            // Hide waiting UI when connected
+            document.getElementById("waiting").style.display = "none";
+          } else if (state === "completed") {
+            statusText = "Connected";
+          } else if (state === "failed") {
+            statusText = "Connection failed";
+          } else if (state === "disconnected") {
+            statusText = "Disconnected";
+          }
+
+          document.getElementById("status").textContent = statusText;
         };
+
+        // Also listen for video tracks arriving
+        peerConnection.addEventListener('track', (event) => {
+          console.log("Remote video track arrived:", event.track.kind, event.track.id);
+          document.getElementById("waiting").style.display = "none";
+          document.getElementById("status").textContent = "Connected - Video streaming";
+        });
+
+        // Add ICE gathering state logging
+        peerConnection.addEventListener('icegatheringstatechange', () => {
+          console.log("ICE gathering state:", peerConnection.iceGatheringState);
+        });
+
+        // Add ICE connection state logging
+        peerConnection.addEventListener('iceconnectionstatechange', () => {
+          console.log("ICE connection state:", peerConnection.iceConnectionState);
+        });
+
+        // Add signaling state logging
+        peerConnection.addEventListener('signalingstatechange', () => {
+          console.log("Signaling state:", peerConnection.signalingState);
+        });
 
       } catch (err) {
         console.error("Error accessing media devices:", err);
@@ -231,40 +345,175 @@
       }
     }
 
-    // Socket events
+    // Socket events - setup after peerConnection is ready
     socket.emit("join-room", roomId);
 
-    socket.on("user-connected", async (userId) => {
-      console.log("User connected:", userId);
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
-      socket.emit("offer", { roomId, offer });
+    // Wait a bit for room joining, then initiate call
+    setTimeout(() => {
+      socket.emit("initiate-call", roomId);
+      console.log("Emitted initiate-call for room:", roomId);
+    }, 500);
+
+    let callInitiated = false;
+
+    // Check if peerConnection is ready before handling WebRTC events
+    const isPeerConnectionReady = () => peerConnection && peerConnection.connectionState !== 'new';
+
+    socket.on("call-initiated", () => {
+      console.log("Call initiated by other party");
+      callInitiated = true;
+      document.getElementById("status").textContent = "Call initiated";
     });
 
-    socket.on("offer", async (offer) => {
-      await peerConnection.setRemoteDescription(offer);
-      const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
-      socket.emit("answer", { roomId, answer });
-    });
+    socket.on("call-ready", async (data) => {
+      console.log("Call ready, my role:", data.role);
+      document.getElementById("status").textContent = "Connecting...";
 
-    socket.on("answer", async (answer) => {
-      await peerConnection.setRemoteDescription(answer);
+      // Hide calling UI if present
+      document.getElementById("callingUI").style.display = "none";
+      document.getElementById("waiting").style.display = "block";
+
+      if (data.role === "offerer") {
+        console.log("I am offerer, creating offer");
+        // Create offer immediately when assigned role
+        setTimeout(async () => {
+          try {
+            const offer = await peerConnection.createOffer();
+            await peerConnection.setLocalDescription(offer);
+            socket.emit("offer", { roomId, offer });
+            console.log("Offer created and sent successfully");
+          } catch (err) {
+            console.error("Error creating offer:", err);
+          }
+        }, 100); // Small delay to ensure WebRTC is ready
+      } else if (data.role === "answerer") {
+        console.log("I am answerer, waiting for offer");
+        // Answerer will receive offer from offerer and respond with answer
+      }
     });
 
     socket.on("ice-candidate", async (candidate) => {
-      try { 
-        await peerConnection.addIceCandidate(candidate); 
-      } catch (e) { 
-        console.error("Error adding ICE candidate:", e); 
+      // Only add ICE candidate if remote description is set
+      if (peerConnection.remoteDescription) {
+        try {
+          await peerConnection.addIceCandidate(candidate);
+        } catch (e) {
+          console.error("Error adding ICE candidate:", e);
+        }
+      } else {
+        console.log("Received ICE candidate before remote description - queuing");
+        // Queue ICE candidates until we have a remote description
+        if (!peerConnection._iceQueue) {
+          peerConnection._iceQueue = [];
+        }
+        peerConnection._iceQueue.push(candidate);
       }
     });
+
+    // Process queued ICE candidates after remote description is set
+    socket.on("offer", async (offer) => {
+      console.log("Received offer");
+      // Wait for peerConnection to be ready before handling offer
+      const checkReady = setInterval(async () => {
+        if (isPeerConnectionReady()) {
+          clearInterval(checkReady);
+          try {
+            await peerConnection.setRemoteDescription(offer);
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+            socket.emit("answer", { roomId, answer });
+
+            // Process queued ICE candidates now that we have remote description
+            if (peerConnection._iceQueue && peerConnection._iceQueue.length > 0) {
+              console.log(`Processing ${peerConnection._iceQueue.length} queued ICE candidates`);
+              for (const candidate of peerConnection._iceQueue) {
+                try {
+                  await peerConnection.addIceCandidate(candidate);
+                } catch (e) {
+                  console.error("Error processing queued ICE candidate:", e);
+                }
+              }
+              peerConnection._iceQueue = [];
+            }
+          } catch (err) {
+            console.error("Error handling offer:", err);
+          }
+        }
+      }, 100);
+    });
+
+    socket.on("answer", async (answer) => {
+      console.log("Received answer");
+      try {
+        await peerConnection.setRemoteDescription(answer);
+
+        // Process queued ICE candidates now that we have remote description
+        if (peerConnection._iceQueue && peerConnection._iceQueue.length > 0) {
+          console.log(`Processing ${peerConnection._iceQueue.length} queued ICE candidates`);
+          for (const candidate of peerConnection._iceQueue) {
+            try {
+              await peerConnection.addIceCandidate(candidate);
+            } catch (e) {
+              console.error("Error processing queued ICE candidate:", e);
+            }
+          }
+          peerConnection._iceQueue = [];
+        }
+      } catch (err) {
+        console.error("Error handling answer:", err);
+      }
+    });
+
+    // Debug panel updates
+    setInterval(() => {
+      const debug = [];
+      if (peerConnection) {
+        debug.push(`Conn: ${peerConnection.connectionState}`);
+        debug.push(`Sig: ${peerConnection.signalingState}`);
+        debug.push(`ICE Conn: ${peerConnection.iceConnectionState}`);
+        debug.push(`ICE Gather: ${peerConnection.iceGatheringState}`);
+      } else {
+        debug.push('No PeerConnection');
+      }
+      if (localStream) {
+        debug.push(`Local: ${localStream.getTracks().length} tracks`);
+      }
+      if (remoteStream) {
+        debug.push(`Remote: ${remoteStream.getTracks().length} tracks`);
+      }
+      debug.push(`Room: ${roomId}`);
+      document.getElementById("debugInfo").innerHTML = debug.join('<br>');
+    }, 1000);
+
+    // Force offer creation for testing
+    function forceOfferCreation() {
+      if (peerConnection && isPeerConnectionReady()) {
+        console.log("MANUALLY CREATING OFFER...");
+        peerConnection.createOffer().then(offer => {
+          peerConnection.setLocalDescription(offer);
+          socket.emit("offer", { roomId, offer });
+          console.log("Manual offer sent!");
+        }).catch(err => console.error("Manual offer failed:", err));
+      }
+    }
+
+    // Force answer creation for testing
+    function forceAnswerCreation() {
+      if (peerConnection && isPeerConnectionReady()) {
+        console.log("MANUALLY CREATING ANSWER...");
+        peerConnection.createAnswer().then(answer => {
+          peerConnection.setLocalDescription(answer);
+          socket.emit("answer", { roomId, answer });
+          console.log("Manual answer sent!");
+        }).catch(err => console.error("Manual answer failed:", err));
+      }
+    }
 
     // Controls
     document.getElementById("micBtn").onclick = () => {
       audioEnabled = !audioEnabled;
       localStream.getAudioTracks()[0].enabled = audioEnabled;
-      
+
       const btn = document.getElementById("micBtn");
       if (audioEnabled) {
         btn.classList.remove("off");
@@ -278,7 +527,7 @@
     document.getElementById("videoBtn").onclick = () => {
       videoEnabled = !videoEnabled;
       localStream.getVideoTracks()[0].enabled = videoEnabled;
-      
+
       const btn = document.getElementById("videoBtn");
       if (videoEnabled) {
         btn.classList.remove("off");
@@ -289,16 +538,33 @@
       }
     };
 
-    document.getElementById("endBtn").onclick = () => {
+    document.getElementById("endBtn").onclick = async () => {
       if (confirm("Are you sure you want to end the call?")) {
+        try {
+          // End call on server side
+          await fetch('/appointments/end-call/' + appointmentId, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          });
+
+          console.log("Call ended on server");
+        } catch (err) {
+          console.error("Error ending call on server:", err);
+        }
+
+        // Clean up local resources
         localStream.getTracks().forEach(track => track.stop());
         if (peerConnection) peerConnection.close();
         window.close();
       }
     };
 
+    function cancelCall() {
+      window.close();
+    }
+
     // Start when page loads
-    startCall();
+    getAppointmentId();
   </script>
 
 </body>

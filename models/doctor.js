@@ -28,6 +28,11 @@ const doctorSchema = new mongoose.Schema({
   }],
   consultationFee: Number,
   isVerified: { type: Boolean, default: false },
+  applicationStatus: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   rating: { type: Number, default: 0 },
   totalRatings: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }

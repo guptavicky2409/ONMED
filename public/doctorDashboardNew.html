@@ -1,0 +1,863 @@
+at view <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard | HMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, #10b981, #059669);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: white !important;
+    }
+
+    .dashboard-container {
+      max-width: 1400px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .welcome-card {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 20px rgba(16, 185, 129, 0.3);
+    }
+
+    .welcome-card h2 {
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: transform 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stat-card .icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+    }
+
+    .stat-card h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .section-card {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+
+    .section-title {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .request-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .request-card:hover {
+      border-color: #10b981;
+      box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+    }
+
+    .appointment-card {
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      transition: all 0.3s;
+    }
+
+    .appointment-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      border-color: #10b981;
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-scheduled { background: #dbeafe; color: #1e40af; }
+    .status-in-progress { background: #fef3c7; color: #d97706; }
+    .status-completed { background: #d1fae5; color: #065f46; }
+    .status-pending { background: #fef3c7; color: #d97706; }
+
+    .btn-accept { background: #10b981; border: none; color: white; }
+    .btn-reject { background: #dc2626; border: none; color: white; }
+    .btn-join { background: #059669; border: none; color: white; }
+    .btn-prescribe { background: #7c3aed; border: none; color: white; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">
+        <i class="bi bi-stethoscope"></i> Doctor Portal
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-white" id="doctorNameDisplay"></span>
+        <button class="btn btn-outline-light btn-sm" onclick="showEditProfileModal()">
+          <i class="bi bi-person-circle"></i> Edit Profile
+        </button>
+        <button class="btn btn-outline-light" onclick="handleLogout()">
+          <i class="bi bi-box-arrow-right"></i> Logout
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Dashboard -->
+  <div class="dashboard-container">
+
+    <!-- Welcome Section -->
+    <div class="welcome-card">
+      <h2>Welcome Back!</h2>
+      <p class="mb-0">Manage your appointments and patient consultations</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" onclick="scrollToPendingRequests()" style="cursor: pointer;">
+        <div class="icon text-warning">
+          <i class="bi bi-bell-fill"></i>
+        </div>
+        <h3 id="pendingRequests">0</h3>
+        <p class="text-muted mb-0">Pending Requests</p>
+      </div>
+
+      <div class="stat-card" onclick="scrollToTodayAppointments()" style="cursor: pointer;">
+        <div class="icon text-primary">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <h3 id="todayAppointments">0</h3>
+        <p class="text-muted mb-0">Today's Appointments</p>
+      </div>
+
+      <div class="stat-card" onclick="scrollToRecentAppointments()" style="cursor: pointer;">
+        <div class="icon text-success">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <h3 id="completedThisMonth">0</h3>
+        <p class="text-muted mb-0">Completed This Month</p>
+      </div>
+
+      <div class="stat-card" onclick="scrollToProfile()" style="cursor: pointer;">
+        <div class="icon text-info">
+          <i class="bi bi-star"></i>
+        </div>
+        <h3 id="rating">0.0</h3>
+        <p class="text-muted mb-0">Rating</p>
+      </div>
+    </div>
+
+    <!-- Pending Requests -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-envelope-open-fill text-warning"></i>
+        Pending Requests
+      </div>
+      <div id="pendingRequestsList">
+        <p class="text-muted text-center">Loading...</p>
+      </div>
+    </div>
+
+    <!-- Today's Appointments -->
+    <div class="section-card">
+      <div class="section-title">
+        <i class="bi bi-calendar2-event text-primary"></i>
+        Today's Appointments
+      </div>
+      <div id="todayAppointmentsList">
+        <p class="text-muted text-center">Loading...</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Accept Request Modal -->
+  <div class="modal fade" id="acceptModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #10b981; color: white;">
+          <h5 class="modal-title">Accept Consultation Request</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="acceptRequestInfo" class="mb-3"></div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Schedule Consultation Time *</label>
+            <input type="datetime-local" id="scheduledTime" class="form-control" min="">
+          </div>
+
+          <div class="alert alert-info">
+            <small><i class="bi bi-info-circle"></i> A unique video call room will be created for this consultation.</small>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-accept" onclick="acceptRequest()">
+            <i class="bi bi-check-circle"></i> Accept Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reject Request Modal -->
+  <div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #dc2626; color: white;">
+          <h5 class="modal-title">Reject Consultation Request</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="rejectRequestInfo" class="mb-3"></div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold">Reason for Rejection (Optional)</label>
+            <textarea id="rejectionReason" class="form-control" rows="3" placeholder="e.g., Not available at requested time, Outside service area, etc."></textarea>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-reject" onclick="rejectRequest()">
+            <i class="bi bi-x-circle"></i> Reject Request
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Profile Modal -->
+  <div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background: #10b981; color: white;">
+          <h5 class="modal-title"><i class="bi bi-person-circle me-2"></i>Edit Profile</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="profileForm">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" class="form-control" id="name" name="name" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-control" id="phone" name="phone" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Specialization</label>
+                <input type="text" class="form-control" id="specialization" name="specialization" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Consultation Fee</label>
+                <input type="number" class="form-control" id="consultationFee" name="consultationFee">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Qualifications</label>
+              <textarea class="form-control" id="qualifications" name="qualifications" rows="2"></textarea>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Experience (Years)</label>
+                <input type="number" class="form-control" id="experience" name="experience">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Registration Number</label>
+                <input type="text" class="form-control" id="registrationNumber" name="registrationNumber">
+              </div>
+            </div>
+
+            <hr>
+            <h6>Availability (Time Slots)</h6>
+            <div class="mb-3">
+              <button type="button" class="btn btn-sm btn-outline-success" onclick="addTimeSlot()">
+                <i class="bi bi-plus-circle"></i> Add Time Slot
+              </button>
+            </div>
+            <div id="timeSlotsContainer">
+              <!-- Time slots will be added here dynamically -->
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-success" onclick="updateProfile()">
+            <i class="bi bi-check-circle"></i> Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="notificationToast" class="toast hide" role="alert">
+      <div class="toast-header bg-info">
+        <i class="bi bi-bell-fill me-2"></i>
+        <strong class="me-auto">Notification</strong>
+        <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+      </div>
+      <div class="toast-body" id="toastBody"></div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const doctorId = localStorage.getItem('doctorId');
+    const doctorName = localStorage.getItem('doctorName');
+    let currentRequest = null;
+
+    if (!doctorId) {
+      window.location.href = '/doctorLogin.html';
+    }
+
+    document.getElementById('doctorNameDisplay').textContent = doctorName || 'Doctor';
+
+    // Set minimum datetime for scheduling
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 30); // Minimum 30 minutes from now
+    document.getElementById('scheduledTime').min = now.toISOString().slice(0, 16);
+
+    // Load Dashboard Data
+    document.addEventListener('DOMContentLoaded', function() {
+      loadDashboard();
+      loadPendingRequests();
+      loadTodayAppointments();
+
+      // Setup notification listener
+      setupNotifications();
+    });
+
+    async function loadDashboard() {
+      try {
+        const response = await fetch('/doctors/stats/' + doctorId);
+        const data = await response.json();
+
+        if (data.success) {
+          document.getElementById('pendingRequests').textContent = data.stats.pendingRequests || 0;
+          document.getElementById('todayAppointments').textContent = data.stats.todayAppointments || 0;
+          document.getElementById('completedThisMonth').textContent = data.stats.completedThisMonth || 0;
+          document.getElementById('rating').textContent = data.stats.rating ? data.stats.rating.toFixed(1) : '0.0';
+        }
+      } catch (err) {
+        console.error('Load dashboard error:', err);
+      }
+    }
+
+    async function loadPendingRequests() {
+      try {
+        const response = await fetch('/requests/doctor/pending');
+        const data = await response.json();
+
+        const container = document.getElementById('pendingRequestsList');
+
+        if (data.success && data.requests.length > 0) {
+          container.innerHTML = data.requests.map(request => `
+            <div class="request-card">
+              <div class="row">
+                <div class="col-md-8">
+                  <div class="d-flex align-items-start mb-2">
+                    <h5 class="mb-0 me-3">${request.patientId.name}</h5>
+                    <span class="status-badge status-pending">Pending</span>
+                  </div>
+
+                  <p class="text-muted mb-1">
+                    <i class="bi bi-calendar"></i> Requested: ${new Date(request.createdAt).toLocaleDateString()}
+                  </p>
+
+                  <p class="text-muted mb-1">
+                    <i class="bi bi-clock"></i> Preferred: ${request.requestedTime ? request.requestedTime : 'Not specified'}
+                  </p>
+
+                  <p class="mb-2"><strong>Disease:</strong> ${request.disease || 'Not specified'}</p>
+                  <p class="mb-2"><strong>Symptoms:</strong> ${request.symptoms || 'Not specified'}</p>
+
+                  ${request.images && request.images.length > 0 ?
+                    `<p class="mb-1"><small><i class="bi bi-images"></i> ${request.images.length} image(s) attached</small></p>` : ''}
+
+                </div>
+                <div class="col-md-4 text-md-end">
+                  <button class="btn btn-accept btn-sm mb-2" onclick="showAcceptModal('${request._id}', '${request.patientId.name}', '${request.disease}', '${request.symptoms}', '${request.requestedDate}')">
+                    <i class="bi bi-check-circle"></i> Accept
+                  </button>
+                  <button class="btn btn-reject btn-sm" onclick="showRejectModal('${request._id}', '${request.patientId.name}')">
+                    <i class="bi bi-x-circle"></i> Reject
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = '<p class="text-muted text-center">No pending requests</p>';
+        }
+
+      } catch (err) {
+        console.error('Load pending requests error:', err);
+        document.getElementById('pendingRequestsList').innerHTML = '<p class="text-danger text-center">Error loading requests</p>';
+      }
+    }
+
+    async function loadTodayAppointments() {
+      try {
+        const response = await fetch('/appointments/doctor/today');
+        const data = await response.json();
+
+        const container = document.getElementById('todayAppointmentsList');
+
+        if (data.success && data.appointments.length > 0) {
+          container.innerHTML = data.appointments.map(appt => {
+            const time = new Date(appt.scheduledDateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const statusClass = `status-${appt.status.replace(' ', '-')}`;
+
+            return `
+              <div class="appointment-card">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div class="flex-grow-1">
+                    <h5 class="mb-2">${appt.patientId.name}</h5>
+                    <p class="text-muted mb-2">
+                      <i class="bi bi-clock"></i> ${time}
+                    </p>
+                    <p class="text-muted mb-2">
+                      <i class="bi bi-clipboard-data"></i> ${appt.problemDescription || 'No problem description'}
+                    </p>
+                    <span class="status-badge ${statusClass}">${appt.status}</span>
+                  </div>
+                  <div class="text-end">
+                    ${appt.status === 'scheduled' || appt.status === 'in-progress' ? `
+                      <button class="btn btn-join btn-sm mb-2" onclick="joinVideoCall('${appt._id}', '${appt.videoCallRoom}')">
+                        <i class="bi bi-camera-video"></i> Join Call
+                      </button>
+                      <button class="btn btn-prescribe btn-sm" onclick="prescribeAppointment('${appt._id}')">
+                        <i class="bi bi-file-earmark-medical"></i> Prescribe
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        } else {
+          container.innerHTML = '<p class="text-muted text-center">No appointments today</p>';
+        }
+
+      } catch (err) {
+        console.error('Load today appointments error:', err);
+        document.getElementById('todayAppointmentsList').innerHTML = '<p class="text-danger text-center">Error loading appointments</p>';
+      }
+    }
+
+    function showAcceptModal(requestId, patientName, disease, symptoms, requestedDate) {
+      currentRequest = requestId;
+      document.getElementById('acceptRequestInfo').innerHTML = `
+        <div class="alert alert-info">
+          <h6>Patient: ${patientName}</h6>
+          <p class="mb-1"><strong>Disease:</strong> ${disease || 'Not specified'}</p>
+          <p class="mb-1"><strong>Symptoms:</strong> ${symptoms || 'Not specified'}</p>
+          <p class="mb-0"><strong>Requested Date:</strong> ${requestedDate ? new Date(requestedDate).toLocaleDateString() : 'Not specified'}</p>
+        </div>
+      `;
+
+      const modal = new bootstrap.Modal(document.getElementById('acceptModal'));
+      modal.show();
+    }
+
+    function showRejectModal(requestId, patientName) {
+      currentRequest = requestId;
+      document.getElementById('rejectRequestInfo').innerHTML = `
+        <div class="alert alert-warning">
+          <h6>Reject request from ${patientName}?</h6>
+          <p class="mb-0">This action cannot be undone.</p>
+        </div>
+      `;
+
+      const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+      modal.show();
+    }
+
+    async function acceptRequest() {
+      const scheduledTime = document.getElementById('scheduledTime').value;
+
+      if (!scheduledTime) {
+        alert('Please select a consultation time');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/requests/accept/${currentRequest}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scheduledDateTime: scheduledTime })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Request accepted and appointment scheduled successfully!');
+          const modal = bootstrap.Modal.getInstance(document.getElementById('acceptModal'));
+          modal.hide();
+          loadPendingRequests();
+          loadDashboard();
+          loadTodayAppointments();
+        } else {
+          // Handle availability error
+          if (data.error && data.error.includes('not available')) {
+            let message = data.error;
+            if (data.availableSlots && data.availableSlots.length > 0) {
+              message += '\n\nAvailable slots:\n' + data.availableSlots.map(slot =>
+                `${slot.day}: ${slot.startTime} - ${slot.endTime}`
+              ).join('\n');
+            } else {
+              message += '\n\nDoctor has no available slots for this day.';
+            }
+            alert(message);
+            return; // Don't close modal so doctor can select different time
+          } else {
+            alert(data.error || 'Failed to accept request');
+          }
+        }
+      } catch (err) {
+        console.error('Accept request error:', err);
+        alert('Network error. Please try again.');
+      }
+    }
+
+    async function rejectRequest() {
+      const reason = document.getElementById('rejectionReason').value;
+
+      try {
+        const response = await fetch(`/requests/reject/${currentRequest}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Request rejected successfully');
+          const modal = bootstrap.Modal.getInstance(document.getElementById('rejectModal'));
+          modal.hide();
+          loadPendingRequests();
+          loadDashboard();
+        } else {
+          alert(data.error || 'Failed to reject request');
+        }
+      } catch (err) {
+        console.error('Reject request error:', err);
+        alert('Network error. Please try again.');
+      }
+    }
+
+    async function joinVideoCall(appointmentId, roomId) {
+      try {
+        const response = await fetch(`/appointments/check-call-access/${appointmentId}`);
+        const data = await response.json();
+
+        if (data.success && data.canJoin) {
+          // Start the call
+          await fetch(`/appointments/start-call/${appointmentId}`, { method: 'POST' });
+
+          // Open video call in new window
+          window.open(`/video/room/${roomId}`, '_blank', 'width=1200,height=800');
+        } else {
+          alert(data.message || 'Cannot join call yet. Please wait until 15 minutes before the scheduled time.');
+        }
+      } catch (err) {
+        console.error('Join call error:', err);
+        alert('Error joining call');
+      }
+    }
+
+    function prescribeAppointment(appointmentId) {
+      window.open(`/doctors/prescribe/${appointmentId}`, '_blank');
+    }
+
+    function handleLogout() {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('doctorId');
+        localStorage.removeItem('doctorName');
+        window.location.href = '/doctorLogin.html';
+      }
+    }
+
+    // Setup notification listener for real-time updates
+    function setupNotifications() {
+      const eventSource = new EventSource(`/notifications/stream/${doctorId}/doctor`);
+
+      eventSource.addEventListener('message', (event) => {
+        const data = JSON.parse(event.data);
+
+        if (data.type === 'appointment-reminder') {
+          showNotification(data.message + ' Patient: ' + data.patientName, 'Appointment Alert');
+        }
+      });
+
+      eventSource.addEventListener('error', (err) => {
+        console.error('Notification stream error:', err);
+      });
+    }
+
+    async function showEditProfileModal() {
+      try {
+        const response = await fetch('/doctors/profile/' + doctorId);
+        const data = await response.json();
+
+        if (data.success) {
+          const doctor = data.doctor;
+          document.getElementById('name').value = doctor.name || '';
+          document.getElementById('phone').value = doctor.phone || '';
+          document.getElementById('specialization').value = doctor.specialization || '';
+          document.getElementById('consultationFee').value = doctor.consultationFee || '';
+          document.getElementById('qualifications').value = doctor.qualifications || '';
+          document.getElementById('experience').value = doctor.experience || '';
+          document.getElementById('registrationNumber').value = doctor.registrationNumber || '';
+
+          // Clear time slots and add existing ones
+          document.getElementById('timeSlotsContainer').innerHTML = '';
+          if (doctor.availability && doctor.availability.length > 0) {
+            doctor.availability.forEach(slot => {
+              addTimeSlot(slot.day, slot.slots);
+            });
+          } else {
+            addTimeSlot(); // Add one empty
+          }
+
+          const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+          modal.show();
+        } else {
+          alert('Failed to load profile');
+        }
+      } catch (err) {
+        console.error('Load profile error:', err);
+        alert('Network error');
+      }
+    }
+
+    function addTimeSlot(day = '', slots = []) {
+      const container = document.getElementById('timeSlotsContainer');
+      const slotDiv = document.createElement('div');
+      slotDiv.className = 'slot-item border rounded p-3 mb-3';
+
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      let daySelect = '<option value="">Select Day</option>';
+      days.forEach(d => {
+        const selected = d === day ? 'selected' : '';
+        daySelect += `<option value="${d}" ${selected}>${d}</option>`;
+      });
+
+      let slotsHtml = '';
+      if (slots.length === 0) {
+        slotsHtml = `
+          <div class="slot-row mb-2">
+            <input type="time" class="form-control form-control-sm d-inline-block me-2" placeholder="Start Time">
+            <input type="time" class="form-control form-control-sm d-inline-block me-2" placeholder="End Time">
+            <button type="button" class="btn btn-sm btn-danger remove-slot" onclick="removeSlot(this)">Remove</button>
+          </div>`;
+      } else {
+        slots.forEach(slot => {
+          slotsHtml += `
+            <div class="slot-row mb-2">
+              <input type="time" class="form-control form-control-sm d-inline-block me-2" value="${slot.startTime}" placeholder="Start Time">
+              <input type="time" class="form-control form-control-sm d-inline-block me-2" value="${slot.endTime}" placeholder="End Time">
+              <button type="button" class="btn btn-sm btn-danger remove-slot" onclick="removeSlot(this)">Remove</button>
+            </div>`;
+        });
+      }
+
+      slotDiv.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <select class="form-select form-select-sm d-inline-block me-2 day-select">${daySelect}</select>
+          <button type="button" class="btn btn-sm btn-outline-success add-time-btn" onclick="addTimeRow(this)">Add Time</button>
+          <button type="button" class="btn btn-sm btn-danger remove-day" onclick="removeDay(this)">Remove Day</button>
+        </div>
+        <div class="times-container">${slotsHtml}</div>
+      `;
+
+      container.appendChild(slotDiv);
+    }
+
+    function addTimeRow(button) {
+      const container = button.parentElement.nextElementSibling;
+      const slotRow = document.createElement('div');
+      slotRow.className = 'slot-row mb-2';
+      slotRow.innerHTML = `
+        <input type="time" class="form-control form-control-sm d-inline-block me-2" placeholder="Start Time">
+        <input type="time" class="form-control form-control-sm d-inline-block me-2" placeholder="End Time">
+        <button type="button" class="btn btn-sm btn-danger remove-slot" onclick="removeSlot(this)">Remove</button>
+      `;
+      container.appendChild(slotRow);
+    }
+
+    function removeSlot(button) {
+      const slotRow = button.parentElement;
+      if (slotRow.parentElement.children.length > 1) {
+        slotRow.remove();
+      } else {
+        alert('At least one time slot required for this day');
+      }
+    }
+
+    function removeDay(button) {
+      const slotItem = button.parentElement.parentElement;
+      if (document.querySelectorAll('.slot-item').length > 1) {
+        slotItem.remove();
+      } else {
+        alert('At least one day required');
+      }
+    }
+
+    async function updateProfile() {
+      const formData = new FormData(document.getElementById('profileForm'));
+      const data = Object.fromEntries(formData);
+
+      // Collect time slots
+      const timeSlotsContainer = document.getElementById('timeSlotsContainer');
+      const availability = [];
+      timeSlotsContainer.querySelectorAll('.slot-item').forEach(item => {
+        const day = item.querySelector('.day-select').value;
+        const slots = [];
+        item.querySelectorAll('.slot-row').forEach(row => {
+          const times = row.querySelectorAll('input');
+          if (times[0].value && times[1].value) {
+            slots.push({
+              startTime: times[0].value,
+              endTime: times[1].value,
+              isBooked: false
+            });
+          }
+        });
+        if (day && slots.length > 0) {
+          availability.push({ day, slots });
+        }
+      });
+
+      data.availability = availability;
+
+      try {
+        const response = await fetch('/doctors/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert('Profile updated successfully!');
+          const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+          modal.hide();
+          // Update the displayed name
+          document.getElementById('doctorNameDisplay').textContent = data.name || 'Doctor';
+          localStorage.setItem('doctorName', data.name);
+        } else {
+          alert(result.error || 'Failed to update profile');
+        }
+      } catch (err) {
+        console.error('Update profile error:', err);
+        alert('Network error');
+      }
+    }
+
+    // Scroll to different sections
+    function scrollToPendingRequests() {
+      const element = document.querySelector('.section-card:has(h5:contains("Pending Requests"))') ||
+                    document.querySelector('.section-card:has([id="pendingRequestsList"])').closest('.section-card') ||
+                    document.querySelector('.section-card').nextElementSibling;
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function scrollToTodayAppointments() {
+      const element = document.querySelector('.section-card:has(h5:contains("Today\'s Appointments"))') ||
+                    document.querySelector('.section-card:has([id="todayAppointmentsList"])').closest('.section-card') ||
+                    document.querySelector('.section-card').nextElementSibling.nextElementSibling;
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+
+    function scrollToRecentAppointments() {
+      // No separate recent section for doctors, scroll to today appointments
+      scrollToTodayAppointments();
+    }
+
+    function scrollToProfile() {
+      // Scroll to top or profile section if exists
+      document.querySelector('.navbar')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function showNotification(message, title = 'Notification') {
+      document.getElementById('toastBody').innerHTML = `
+        <strong>${title}:</strong> ${message}
+        <button class="btn btn-sm btn-primary w-100 mt-2" onclick="window.location.reload()">Refresh</button>
+      `;
+
+      const toast = new bootstrap.Toast(document.getElementById('notificationToast'));
+      toast.show();
+    }
+  </script>
+
+</body>
+</html>

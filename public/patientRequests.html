@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Requests | HMS</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: #f0f2f5;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .navbar {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: white !important;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .welcome-card {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white;
+      border-radius: 15px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 5px 20px rgba(139, 92, 246, 0.3);
+    }
+
+    .request-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      transition: all 0.3s;
+    }
+
+    .request-card:hover {
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .status-pending { background: #fef3c7; color: #d97706; }
+    .status-accepted { background: #dbeafe; color: #1d4ed8; }
+    .status-rejected { background: #fee2e2; color: #dc2626; }
+    .status-completed { background: #d1fae5; color: #059669; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">
+        <i class="bi bi-hospital"></i> My Requests
+      </span>
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-outline-light" onclick="goBack()">
+          <i class="bi bi-arrow-left"></i> Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="container">
+
+    <!-- Welcome Section -->
+    <div class="welcome-card">
+      <h2>My Consultation Requests</h2>
+      <p class="mb-0">Track the status of your appointment requests with doctors</p>
+    </div>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mt-2">Loading your requests...</p>
+    </div>
+
+    <!-- Requests List -->
+    <div id="requestsContainer" class="d-none">
+
+      <div id="noRequests" class="text-center text-muted py-5 d-none">
+        <i class="bi bi-file-earmark-x" style="font-size: 3rem;"></i>
+        <p class="mt-2">No requests found</p>
+        <button class="btn btn-primary" onclick="window.location.href='/patientDashboardNew.html'">
+          Book a New Appointment
+        </button>
+      </div>
+
+      <div id="requestsList">
+        <!-- Requests will be loaded here -->
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Bootstrap Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const patientId = localStorage.getItem('patientId');
+
+    if (!patientId) {
+      window.location.href = '/patientLoginNew.html';
+    }
+
+    // Load requests when page loads
+    document.addEventListener('DOMContentLoaded', loadRequests);
+
+    async function loadRequests() {
+      try {
+        const response = await fetch('/requests/patient/my-requests');
+        const data = await response.json();
+
+        document.getElementById('loading').classList.add('d-none');
+
+        if (data.success && data.requests.length > 0) {
+          document.getElementById('requestsContainer').classList.remove('d-none');
+          displayRequests(data.requests);
+        } else {
+          document.getElementById('requestsContainer').classList.remove('d-none');
+          document.getElementById('noRequests').classList.remove('d-none');
+        }
+      } catch (error) {
+        console.error('Error loading requests:', error);
+        document.getElementById('loading').classList.add('d-none');
+        document.getElementById('requestsContainer').classList.remove('d-none');
+        document.getElementById('noRequests').innerHTML = `
+          <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: #dc3545;"></i>
+          <p class="mt-2">Error loading requests. Please try again.</p>
+        `;
+        document.getElementById('noRequests').classList.remove('d-none');
+      }
+    }
+
+    function displayRequests(requests) {
+      const container = document.getElementById('requestsList');
+
+      container.innerHTML = requests.map(request => {
+        const createdDate = new Date(request.createdAt).toLocaleDateString();
+        const requestedDate = new Date(request.requestedDate).toLocaleDateString();
+        const requestedTime = formatTime(request.requestedTime);
+
+        let statusBadge = '';
+        let statusMessage = '';
+
+        switch(request.status) {
+          case 'pending':
+            statusBadge = 'status-pending';
+            statusMessage = 'Doctor will review your request';
+            break;
+          case 'accepted':
+            statusBadge = 'status-accepted';
+            statusMessage = `Appointment scheduled for ${new Date(request.scheduledDateTime).toLocaleString()}`;
+            break;
+          case 'rejected':
+            statusBadge = 'status-rejected';
+            statusMessage = `Rejected: ${request.rejectionReason || 'No reason provided'}`;
+            break;
+          case 'completed':
+            statusBadge = 'status-completed';
+            statusMessage = 'Appointment completed successfully';
+            break;
+        }
+
+        const imagesHtml = request.images && request.images.length > 0 ?
+          `<p class="mb-1"><small><i class="bi bi-images"></i> ${request.images.length} image(s) uploaded</small></p>` : '';
+
+        return `
+          <div class="request-card">
+            <div class="row">
+              <div class="col-md-8">
+                <div class="d-flex align-items-start mb-2">
+                  <h5 class="mb-0 me-3">Dr. ${request.doctorId.name}</h5>
+                  <span class="status-badge ${statusBadge}">${request.status.charAt(0).toUpperCase() + request.status.slice(1)}</span>
+                </div>
+
+                <p class="text-muted mb-1">
+                  <i class="bi bi-tag-fill"></i> ${request.doctorId.specialization}
+                  <i class="bi bi-star-fill ms-3 text-warning"></i> ${request.doctorId.rating ? request.doctorId.rating.toFixed(1) : 'New'}
+                </p>
+
+                <p class="text-muted mb-1">
+                  <i class="bi bi-geo-alt-fill"></i> ${request.doctorId.location.city || 'Location not specified'}
+                </p>
+
+                <p class="mb-2"><strong>Symptoms:</strong> ${request.symptoms || request.disease}</p>
+
+                <p class="mb-1"><small><i class="bi bi-calendar"></i> Requested: ${requestedDate} at ${requestedTime}</small></p>
+                <p class="mb-1"><small><i class="bi bi-clock"></i> Request sent: ${createdDate}</small></p>
+
+                ${imagesHtml}
+
+                <p class="mb-0 mt-2"><em>${statusMessage}</em></p>
+              </div>
+
+              <div class="col-md-4 text-md-end">
+                <h6 class="text-success mb-3">₹${request.doctorId.consultationFee}</h6>
+
+                ${request.status === 'accepted' ? `
+                  <button class="btn btn-success btn-sm mb-2" onclick="joinCall('${request.scheduledDateTime.split('T')[0]}', '${request.requestedTime}', '${request.videoCallRoom}')">
+                    <i class="bi bi-camera-video"></i> Join Call
+                  </button>
+                  <br>
+                  <small class="text-muted">Room: ${request.videoCallRoom}</small>
+                ` : ''}
+
+                ${request.status === 'pending' ? `
+                  <button class="btn btn-outline-danger btn-sm" onclick="cancelRequest('${request._id}')">
+                    <i class="bi bi-x-circle"></i> Cancel Request
+                  </button>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function formatTime(timeString) {
+      if (!timeString) return 'Not specified';
+      const [hours, minutes] = timeString.split(':');
+      const hour12 = parseInt(hours) % 12 || 12;
+      const ampm = parseInt(hours) >= 12 ? 'PM' : 'AM';
+      return `${hour12}:${minutes} ${ampm}`;
+    }
+
+    async function cancelRequest(requestId) {
+      if (!confirm('Are you sure you want to cancel this request?')) return;
+
+      try {
+        const response = await fetch(`/requests/${requestId}/cancel`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Request cancelled successfully');
+          loadRequests(); // Reload the list
+        } else {
+          alert(data.error || 'Failed to cancel request');
+        }
+      } catch (error) {
+        console.error('Error cancelling request:', error);
+        alert('Network error. Please try again.');
+      }
+    }
+
+    function joinCall(scheduledDate, scheduledTime, roomId) {
+      // Simple check if it's time for the call
+      const now = new Date();
+      const scheduled = new Date(`${scheduledDate} ${scheduledTime}`);
+      const timeDiff = (scheduled - now) / 60000; // in minutes
+
+      if (Math.abs(timeDiff) <= 30) { // Within 30 minutes before or after
+        window.open(`/video/room/${roomId}`, '_blank', 'width=1200,height=800');
+      } else {
+        alert('It\'s not yet time for your appointment. You can join 15 minutes before the scheduled time.');
+      }
+    }
+
+    function goBack() {
+      window.location.href = '/patientDashboardNew.html';
+    }
+  </script>
+
+</body>
+</html>

@@ -79,6 +79,14 @@ cron.schedule('* * * * *', async () => {
   }
 });
 
+// Send notification (Internal endpoint)
+router.post("/send", (req, res) => {
+  const { userId, userType, type, message, appointmentId, videoCallRoom } = req.body;
+  const data = { type, message, appointmentId, videoCallRoom };
+  sendNotification(userId, userType, data);
+  res.json({ success: true });
+});
+
 // Get pending notifications
 router.get("/pending/:userId/:userType", async (req, res) => {
   try {
@@ -107,4 +115,6 @@ router.get("/pending/:userId/:userType", async (req, res) => {
   }
 });
 
+// Export the sendNotification function for use in other routes
+module.exports.sendNotification = sendNotification;
 module.exports = router;

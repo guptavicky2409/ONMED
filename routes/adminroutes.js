@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const Admin = require("../models/admin");
+const Doctor = require("../models/doctor");
 const bcrypt = require("bcrypt");
-const auth = require("../middleware/auth");
-const role = require("../middleware/role");
+const { adminAuth } = require("../middleware/auth");
 
 
 // Create default admin (ONLY FIRST TIME)
@@ -22,17 +22,11 @@ router.get("/createDefault", async (req, res) => {
   res.send("Default admin created: admin / admin123");
 });
 
-router.get("/all-doctors", auth, role(["admin"]), async (req, res) => {
-    const doctors = await Doctor.find();
-    res.json(doctors);
-});
-
 // LOGIN
 router.post("/login", async (req, res) => {
   console.log("BODY RECEIVED:", req.body);   // DEBUG LINE
 
   const { username, password } = req.body;
-
 
   const admin = await Admin.findOne({ username });
   if (!admin) return res.send("Invalid username");
@@ -41,7 +35,7 @@ router.post("/login", async (req, res) => {
   if (!valid) return res.send("Incorrect password");
 
   req.session.admin = admin._id;
-  res.redirect("/dashboard.html");
+  res.redirect("/adminDashboard.html");
 });
 
 // LOGOUT
@@ -56,85 +50,30 @@ router.get("/check", (req, res) => {
   res.send("LOGGED_IN");
 });
 
-// Register Admin
-router.post("/register", async (req, res) => {
-  const { username, password } = req.body;
-
-  const existing = await Admin.findOne({ username });
-  if (existing) return res.send("Username already exists, choose another.");
-
-  const hashed = await bcrypt.hash(password, 10);
-
-  const newAdmin = new Admin({
-    username,
-    password: hashed
-  });
-
-  await newAdmin.save();
-
-  res.send("Admin created successfully! <a href='/login.html'>Login Now</a>");
+// Doctor verification routes
+router.post("/doctors/verify/:doctorId", adminAuth, async (req, res) => {
+  try {
+    await Doctor.findByIdAndUpdate(req.params.doctorId, {
+      isVerified: true,
+      applicationStatus: 'approved'
+    });
+    res.json({ success: true, message: "Doctor verified successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-router.post("/send-otp", async (req, res) => {
-  const { username } = req.body;
-
-  const admin = await Admin.findOne({ username });
-  if (!admin) return res.send("User not found");
-
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // Save in session
-  req.session.resetUser = username;
-  req.session.otp = otp;
-
-  // Simulate email by printing OTP on screen
-  res.send(`
-    OTP sent to your email (simulation): <b>${otp}</b><br><br>
-    <a href="/verifyOtp.html">Enter OTP</a>
-  `);
-});
-
-router.post("/verify-otp", (req, res) => {
-  const { otp } = req.body;
-
-  if (!req.session.otp) return res.send("OTP expired. Try again.");
-
-  if (otp !== req.session.otp) return res.send("Incorrect OTP");
-
-  // OTP correct → allow reset password
-  req.session.verified = true;
-  res.redirect("/resetPassword.html");
-});
-
-router.post("/reset-password", async (req, res) => {
-  if (!req.session.verified) return res.send("Not allowed");
-
-  const { newPassword } = req.body;
-
-  const username = req.session.resetUser;
-
-  const hashed = await bcrypt.hash(newPassword, 10);
-
-  await Admin.findOneAndUpdate(
-    { username },
-    { password: hashed }
-  );
-
-  // Clear session
-  req.session.verified = false;
-  req.session.otp = null;
-
-  res.send("Password updated successfully! <a href='/login.html'>Login now</a>");
-});
-router.put("/doctor/:id", async (req, res) => {
-  await Doctor.findByIdAndUpdate(req.params.id, req.body);
-  res.json({ msg: "Doctor updated" });
-});
-
-router.delete("/doctor/:id", async (req, res) => {
-  await Doctor.findByIdAndDelete(req.params.id);
-  res.json({ msg: "Doctor deleted" });
+router.post("/doctors/reject/:doctorId", adminAuth, async (req, res) => {
+  try {
+    console.log('Deleting rejected doctor:', req.params.doctorId);
+    // Delete the doctor completely from database
+    const deleted = await Doctor.findByIdAndDelete(req.params.doctorId);
+    console.log('Deleted doctor result:', deleted ? 'success' : 'not found');
+    res.json({ success: true, message: "Doctor application rejected and removed" });
+  } catch (err) {
+    console.error('Reject doctor error:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 module.exports = router;
