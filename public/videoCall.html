@@ -20,27 +20,37 @@
       width: 100vw;
       height: 100vh;
       display: flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      gap: 20px;
       padding: 20px;
     }
 
-    .video-wrapper {
+    .videos-wrapper {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      max-width: 1400px;
+      height: calc(100vh - 150px);
+    }
+
+    .video-box {
       position: relative;
       flex: 1;
-      max-width: 45%;
+      background: #000;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     video {
       width: 100%;
-      height: auto;
-      display: block;
+      height: 100%;
+      object-fit: cover;
       background: #000;
-      border-radius: 20px;
     }
 
     .video-label {
@@ -53,89 +63,17 @@
       border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
+      z-index: 10;
     }
 
-    .controls {
-      position: fixed;
-      bottom: 30px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 15px;
-      background: rgba(255,255,255,0.1);
-      backdrop-filter: blur(10px);
-      padding: 15px 25px;
-      border-radius: 50px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-    }
-
-    .control-btn {
-      width: 55px;
-      height: 55px;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      transition: all 0.3s;
-    }
-
-    .control-btn:hover {
-      transform: scale(1.1);
-    }
-
-    .btn-mic, .btn-video {
-      background: #4a5568;
-      color: white;
-    }
-
-    .btn-end {
-      background: #e53e3e;
-      color: white;
-    }
-
-    .btn-mic.off, .btn-video.off {
-      background: #fc8181;
-    }
-
-    .status {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-    }
-
-    .waiting {
+    .waiting-message {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
       color: white;
       text-align: center;
-    }
-
-    .calling {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: white;
-      text-align: center;
-      background: rgba(0,0,0,0.8);
-      padding: 30px;
-      border-radius: 15px;
-      min-width: 300px;
-    }
-
-    .calling h3 {
-      margin-bottom: 15px;
-      color: #10b981;
+      z-index: 5;
     }
 
     .spinner {
@@ -151,48 +89,139 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
+    .controls {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 15px 25px;
+      border-radius: 50px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+      z-index: 100;
+    }
+
+    .control-btn {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      transition: all 0.3s;
+      background: #4a5568;
+      color: white;
+    }
+
+    .control-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .control-btn.off {
+      background: #fc8181;
+    }
+
+    .btn-end {
+      background: #e53e3e !important;
+    }
+
+    .status {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 100;
+    }
+
+    .connection-status {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-size: 12px;
+      z-index: 100;
+      max-width: 300px;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-dot.connecting {
+      background: #fbbf24;
+      animation: pulse 1.5s infinite;
+    }
+
+    .status-dot.connected {
+      background: #10b981;
+    }
+
+    .status-dot.failed {
+      background: #ef4444;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
   </style>
 </head>
 <body>
 
-    <div class="status" id="status">Connecting...</div>
+  <div class="status" id="status">
+    <span class="status-dot connecting" id="statusDot"></span>
+    <span id="statusText">Connecting...</span>
+  </div>
 
-    <!-- Debug Panel (visible for testing) -->
-    <div style="position: fixed; top: 20px; left: 20px; font-size: 12px; background: rgba(0,0,0,0.8); color: white; padding: 10px; border-radius: 5px; z-index: 1000;">
-      <div id="debugInfo">Initializing...</div>
-      <button onclick="forceOfferCreation()" style="margin-top: 5px; font-size: 11px;">Force Offer</button>
-      <button onclick="forceAnswerCreation()" style="margin-top: 5px; font-size: 11px;">Force Answer</button>
-    </div>
+  <div class="connection-status" id="connectionStatus">
+    <div><strong>Connection:</strong> <span id="connState">new</span></div>
+    <div><strong>ICE:</strong> <span id="iceState">new</span></div>
+    <div><strong>Signal:</strong> <span id="sigState">stable</span></div>
+  </div>
 
   <div class="video-container">
-    <div class="video-wrapper">
-      <div class="video-label">You</div>
-      <video id="localVideo" autoplay playsinline muted></video>
-    </div>
-
-    <div class="video-wrapper">
-      <div class="video-label">Remote User</div>
-      <video id="remoteVideo" autoplay playsinline></video>
-      <div class="waiting" id="waiting" style="display: none;">
-        <div class="spinner"></div>
-        <p>Waiting for the other person to join...</p>
+    <div class="videos-wrapper">
+      <!-- Local Video -->
+      <div class="video-box">
+        <div class="video-label">You</div>
+        <video id="localVideo" autoplay playsinline muted></video>
       </div>
 
-      <!-- Calling UI for when initiating call -->
-      <div class="calling" id="callingUI" style="display: none;">
-        <div class="spinner"></div>
-        <h3>Calling...</h3>
-        <p>Waiting for the other person to answer</p>
-        <button class="btn btn-secondary mt-3" onclick="cancelCall()">Cancel</button>
+      <!-- Remote Video -->
+      <div class="video-box">
+        <div class="video-label">Remote User</div>
+        <video id="remoteVideo" autoplay playsinline></video>
+        <div class="waiting-message" id="waiting">
+          <div class="spinner"></div>
+          <p>Waiting for the other person to join...</p>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="controls">
-    <button class="control-btn btn-mic" id="micBtn" title="Toggle Microphone">
+    <button class="control-btn" id="micBtn" title="Toggle Microphone">
       <i class="bi bi-mic-fill"></i>
     </button>
-    <button class="control-btn btn-video" id="videoBtn" title="Toggle Video">
+    <button class="control-btn" id="videoBtn" title="Toggle Video">
       <i class="bi bi-camera-video-fill"></i>
     </button>
     <button class="control-btn btn-end" id="endBtn" title="End Call">
@@ -204,367 +233,348 @@
   <script>
     const socket = io();
     const roomId = window.location.pathname.split("/").pop();
-    let appointmentId = null;
 
     let localStream;
     let remoteStream;
     let peerConnection;
     let audioEnabled = true;
     let videoEnabled = true;
+    let isOfferer = false;
+    let iceCandidatesQueue = [];
 
-    // STUN only - works for same network, use localhost for testing
-    const servers = {
+    // ICE servers configuration with both STUN and TURN
+    const configuration = {
       iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" }
-        // TURN servers commented out for testing
-        // Add back when testing across different networks
-        /*
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
         {
           urls: 'turn:openrelay.metered.ca:80',
-          username: "openrelayproject",
-          credential: "openrelayproject"
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
+        },
+        {
+          urls: 'turn:openrelay.metered.ca:443',
+          username: 'openrelayproject',
+          credential: 'openrelayproject',
         }
-        */
-      ]
+      ],
+      iceCandidatePoolSize: 10
     };
 
-    // Get appointment ID from room ID
-    async function getAppointmentId() {
-      try {
-        const response = await fetch('/appointments/by-room/' + roomId);
-        const data = await response.json();
-        if (data.success) {
-          appointmentId = data.appointment._id;
-          console.log("Appointment ID:", appointmentId);
-          await startCall();
-        } else {
-          console.error("Failed to get appointment ID");
-          alert("Appointment not found");
-          window.close();
-        }
-      } catch (err) {
-        console.error("Error getting appointment ID:", err);
-        alert("Error loading appointment");
-        window.close();
-      }
+    // Update status
+    function updateStatus(text, connected = false, failed = false) {
+      document.getElementById('statusText').textContent = text;
+      const dot = document.getElementById('statusDot');
+      dot.className = 'status-dot ' + (failed ? 'failed' : connected ? 'connected' : 'connecting');
     }
 
-    // Start call
-    async function startCall() {
+    // Initialize media and peer connection
+    async function initializeCall() {
       try {
-        console.log("Requesting camera/microphone access...");
+        console.log('🎥 Requesting media devices...');
+        updateStatus('Accessing camera and microphone...');
 
+        // Get user media
         localStream = await navigator.mediaDevices.getUserMedia({
-          video: true,
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
           audio: true
         });
 
-        console.log("Local stream obtained:", {
-          videoTracks: localStream.getVideoTracks().length,
-          audioTracks: localStream.getAudioTracks().length,
-          videoTrackEnabled: localStream.getVideoTracks()[0]?.enabled,
-          audioTrackEnabled: localStream.getAudioTracks()[0]?.enabled
+        console.log('✅ Got local stream:', {
+          video: localStream.getVideoTracks().length,
+          audio: localStream.getAudioTracks().length
         });
 
-        document.getElementById("localVideo").srcObject = localStream;
-        document.getElementById("status").textContent = "Connected - Local stream ready";
+        // Display local video
+        document.getElementById('localVideo').srcObject = localStream;
 
-        peerConnection = new RTCPeerConnection(servers);
+        // Create peer connection
+        createPeerConnection();
 
-        console.log("PeerConnection created with TURN servers");
+        // Join room
+        socket.emit('join-room', roomId);
+        updateStatus('Joined room, waiting for other participant...');
+        console.log('✅ Sent join-room for room:', roomId);
 
-        remoteStream = new MediaStream();
-        document.getElementById("remoteVideo").srcObject = remoteStream;
+      } catch (error) {
+        console.error('❌ Error accessing media devices:', error);
+        updateStatus('Failed to access camera/microphone', false, true);
+        alert('Could not access camera/microphone. Please check permissions and try again.');
+      }
+    }
 
-        localStream.getTracks().forEach(track => {
-          peerConnection.addTrack(track, localStream);
+    // Create peer connection
+    function createPeerConnection() {
+      console.log('🔗 Creating peer connection...');
+      peerConnection = new RTCPeerConnection(configuration);
+
+      // Add local stream tracks
+      localStream.getTracks().forEach(track => {
+        console.log('📤 Adding local track:', track.kind);
+        peerConnection.addTrack(track, localStream);
+      });
+
+      // Setup remote stream
+      remoteStream = new MediaStream();
+      document.getElementById('remoteVideo').srcObject = remoteStream;
+
+      // Handle incoming tracks
+      peerConnection.ontrack = (event) => {
+        console.log('📥 Received remote track:', event.track.kind);
+        event.streams[0].getTracks().forEach(track => {
+          console.log('➕ Adding track to remote stream:', track.kind);
+          remoteStream.addTrack(track);
         });
+        
+        // Hide waiting message
+        document.getElementById('waiting').style.display = 'none';
+        updateStatus('Connected', true);
+      };
 
-        peerConnection.ontrack = (event) => {
-          event.streams[0].getTracks().forEach(track => {
-            remoteStream.addTrack(track);
+      // Handle ICE candidates
+      peerConnection.onicecandidate = (event) => {
+        if (event.candidate) {
+          console.log('🧊 Sending ICE candidate');
+          socket.emit('ice-candidate', {
+            roomId: roomId,
+            candidate: event.candidate
           });
-          document.getElementById("waiting").style.display = "none";
-        };
+        } else {
+          console.log('✅ All ICE candidates sent');
+        }
+      };
 
-        peerConnection.onicecandidate = (event) => {
-          if (event.candidate) {
-            socket.emit("ice-candidate", { roomId, candidate: event.candidate });
-          }
-        };
+      // Connection state changes
+      peerConnection.onconnectionstatechange = () => {
+        const state = peerConnection.connectionState;
+        console.log('🔄 Connection state:', state);
+        document.getElementById('connState').textContent = state;
 
-        peerConnection.onconnectionstatechange = () => {
-          console.log("Connection state:", peerConnection.connectionState);
-          const state = peerConnection.connectionState;
-          let statusText = state.charAt(0).toUpperCase() + state.slice(1);
+        if (state === 'connected') {
+          updateStatus('Connected', true);
+        } else if (state === 'failed' || state === 'disconnected') {
+          updateStatus('Connection ' + state, false, true);
+        } else if (state === 'connecting') {
+          updateStatus('Connecting...');
+        }
+      };
 
-          // Provide more user-friendly messages
-          if (state === "connecting") {
-            statusText = "Connecting...";
-          } else if (state === "connected") {
-            statusText = "Connected";
-            // Hide waiting UI when connected
-            document.getElementById("waiting").style.display = "none";
-          } else if (state === "completed") {
-            statusText = "Connected";
-          } else if (state === "failed") {
-            statusText = "Connection failed";
-          } else if (state === "disconnected") {
-            statusText = "Disconnected";
-          }
+      // ICE connection state
+      peerConnection.oniceconnectionstatechange = () => {
+        const state = peerConnection.iceConnectionState;
+        console.log('🧊 ICE connection state:', state);
+        document.getElementById('iceState').textContent = state;
+      };
 
-          document.getElementById("status").textContent = statusText;
-        };
+      // Signaling state
+      peerConnection.onsignalingstatechange = () => {
+        const state = peerConnection.signalingState;
+        console.log('📡 Signaling state:', state);
+        document.getElementById('sigState').textContent = state;
+      };
 
-        // Also listen for video tracks arriving
-        peerConnection.addEventListener('track', (event) => {
-          console.log("Remote video track arrived:", event.track.kind, event.track.id);
-          document.getElementById("waiting").style.display = "none";
-          document.getElementById("status").textContent = "Connected - Video streaming";
-        });
-
-        // Add ICE gathering state logging
-        peerConnection.addEventListener('icegatheringstatechange', () => {
-          console.log("ICE gathering state:", peerConnection.iceGatheringState);
-        });
-
-        // Add ICE connection state logging
-        peerConnection.addEventListener('iceconnectionstatechange', () => {
-          console.log("ICE connection state:", peerConnection.iceConnectionState);
-        });
-
-        // Add signaling state logging
-        peerConnection.addEventListener('signalingstatechange', () => {
-          console.log("Signaling state:", peerConnection.signalingState);
-        });
-
-      } catch (err) {
-        console.error("Error accessing media devices:", err);
-        alert("Unable to access camera/microphone. Please check permissions.");
-      }
+      // ICE gathering state
+      peerConnection.onicegatheringstatechange = () => {
+        console.log('🧊 ICE gathering state:', peerConnection.iceGatheringState);
+      };
     }
 
-    // Socket events - setup after peerConnection is ready
-    socket.emit("join-room", roomId);
-
-    // Wait a bit for room joining, then initiate call
-    setTimeout(() => {
-      socket.emit("initiate-call", roomId);
-      console.log("Emitted initiate-call for room:", roomId);
-    }, 500);
-
-    let callInitiated = false;
-
-    // Check if peerConnection is ready before handling WebRTC events
-    const isPeerConnectionReady = () => peerConnection && peerConnection.connectionState !== 'new';
-
-    socket.on("call-initiated", () => {
-      console.log("Call initiated by other party");
-      callInitiated = true;
-      document.getElementById("status").textContent = "Call initiated";
-    });
-
-    socket.on("call-ready", async (data) => {
-      console.log("Call ready, my role:", data.role);
-      document.getElementById("status").textContent = "Connecting...";
-
-      // Hide calling UI if present
-      document.getElementById("callingUI").style.display = "none";
-      document.getElementById("waiting").style.display = "block";
-
-      if (data.role === "offerer") {
-        console.log("I am offerer, creating offer");
-        // Create offer immediately when assigned role
-        setTimeout(async () => {
-          try {
-            const offer = await peerConnection.createOffer();
-            await peerConnection.setLocalDescription(offer);
-            socket.emit("offer", { roomId, offer });
-            console.log("Offer created and sent successfully");
-          } catch (err) {
-            console.error("Error creating offer:", err);
-          }
-        }, 100); // Small delay to ensure WebRTC is ready
-      } else if (data.role === "answerer") {
-        console.log("I am answerer, waiting for offer");
-        // Answerer will receive offer from offerer and respond with answer
-      }
-    });
-
-    socket.on("ice-candidate", async (candidate) => {
-      // Only add ICE candidate if remote description is set
-      if (peerConnection.remoteDescription) {
-        try {
-          await peerConnection.addIceCandidate(candidate);
-        } catch (e) {
-          console.error("Error adding ICE candidate:", e);
-        }
-      } else {
-        console.log("Received ICE candidate before remote description - queuing");
-        // Queue ICE candidates until we have a remote description
-        if (!peerConnection._iceQueue) {
-          peerConnection._iceQueue = [];
-        }
-        peerConnection._iceQueue.push(candidate);
-      }
-    });
-
-    // Process queued ICE candidates after remote description is set
-    socket.on("offer", async (offer) => {
-      console.log("Received offer");
-      // Wait for peerConnection to be ready before handling offer
-      const checkReady = setInterval(async () => {
-        if (isPeerConnectionReady()) {
-          clearInterval(checkReady);
-          try {
-            await peerConnection.setRemoteDescription(offer);
-            const answer = await peerConnection.createAnswer();
-            await peerConnection.setLocalDescription(answer);
-            socket.emit("answer", { roomId, answer });
-
-            // Process queued ICE candidates now that we have remote description
-            if (peerConnection._iceQueue && peerConnection._iceQueue.length > 0) {
-              console.log(`Processing ${peerConnection._iceQueue.length} queued ICE candidates`);
-              for (const candidate of peerConnection._iceQueue) {
-                try {
-                  await peerConnection.addIceCandidate(candidate);
-                } catch (e) {
-                  console.error("Error processing queued ICE candidate:", e);
-                }
-              }
-              peerConnection._iceQueue = [];
-            }
-          } catch (err) {
-            console.error("Error handling offer:", err);
-          }
-        }
-      }, 100);
-    });
-
-    socket.on("answer", async (answer) => {
-      console.log("Received answer");
+    // Create and send offer
+    async function createOffer() {
       try {
-        await peerConnection.setRemoteDescription(answer);
+        console.log('📞 Creating offer...');
+        isOfferer = true;
+        
+        const offer = await peerConnection.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        });
+        
+        await peerConnection.setLocalDescription(offer);
+        console.log('✅ Local description set (offer)');
+        
+        socket.emit('offer', {
+          roomId: roomId,
+          offer: offer
+        });
+        
+        updateStatus('Calling...');
+      } catch (error) {
+        console.error('❌ Error creating offer:', error);
+        updateStatus('Failed to create call', false, true);
+      }
+    }
 
-        // Process queued ICE candidates now that we have remote description
-        if (peerConnection._iceQueue && peerConnection._iceQueue.length > 0) {
-          console.log(`Processing ${peerConnection._iceQueue.length} queued ICE candidates`);
-          for (const candidate of peerConnection._iceQueue) {
-            try {
-              await peerConnection.addIceCandidate(candidate);
-            } catch (e) {
-              console.error("Error processing queued ICE candidate:", e);
-            }
-          }
-          peerConnection._iceQueue = [];
+    // Handle incoming offer
+    async function handleOffer(offer) {
+      try {
+        console.log('📥 Received offer, creating answer...');
+        isOfferer = false;
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        console.log('✅ Remote description set (offer)');
+        
+        // Process queued ICE candidates
+        while (iceCandidatesQueue.length > 0) {
+          const candidate = iceCandidatesQueue.shift();
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log('✅ Added queued ICE candidate');
         }
-      } catch (err) {
-        console.error("Error handling answer:", err);
+        
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+        console.log('✅ Local description set (answer)');
+        
+        socket.emit('answer', {
+          roomId: roomId,
+          answer: answer
+        });
+        
+        updateStatus('Connecting...');
+      } catch (error) {
+        console.error('❌ Error handling offer:', error);
+        updateStatus('Failed to answer call', false, true);
+      }
+    }
+
+    // Handle incoming answer
+    async function handleAnswer(answer) {
+      try {
+        console.log('📥 Received answer');
+        
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        console.log('✅ Remote description set (answer)');
+        
+        // Process queued ICE candidates
+        while (iceCandidatesQueue.length > 0) {
+          const candidate = iceCandidatesQueue.shift();
+          await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+          console.log('✅ Added queued ICE candidate');
+        }
+        
+        updateStatus('Connecting...');
+      } catch (error) {
+        console.error('❌ Error handling answer:', error);
+      }
+    }
+
+    // Handle incoming ICE candidate
+    async function handleIceCandidate(candidate) {
+      try {
+        if (!peerConnection.remoteDescription) {
+          console.log('⏳ Queuing ICE candidate (no remote description yet)');
+          iceCandidatesQueue.push(candidate);
+          return;
+        }
+        
+        await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        console.log('✅ Added ICE candidate');
+      } catch (error) {
+        console.error('❌ Error adding ICE candidate:', error);
+      }
+    }
+
+    // Socket event handlers
+    socket.on('user-joined', (data) => {
+      console.log('👤 User joined:', data.socketId);
+      updateStatus('User joined, preparing call...');
+    });
+
+    socket.on('start-call', (data) => {
+      console.log('🚀 Starting call with role:', data.role);
+      if (data.role === 'offerer') {
+        isOfferer = true;
+        createOffer();
+      } else {
+        console.log('Waiting for offer as answerer');
+        isOfferer = false;
       }
     });
 
-    // Debug panel updates
-    setInterval(() => {
-      const debug = [];
-      if (peerConnection) {
-        debug.push(`Conn: ${peerConnection.connectionState}`);
-        debug.push(`Sig: ${peerConnection.signalingState}`);
-        debug.push(`ICE Conn: ${peerConnection.iceConnectionState}`);
-        debug.push(`ICE Gather: ${peerConnection.iceGatheringState}`);
-      } else {
-        debug.push('No PeerConnection');
-      }
-      if (localStream) {
-        debug.push(`Local: ${localStream.getTracks().length} tracks`);
-      }
-      if (remoteStream) {
-        debug.push(`Remote: ${remoteStream.getTracks().length} tracks`);
-      }
-      debug.push(`Room: ${roomId}`);
-      document.getElementById("debugInfo").innerHTML = debug.join('<br>');
-    }, 1000);
+    socket.on('offer', (offer) => {
+      console.log('📨 Received offer');
+      handleOffer(offer);
+    });
 
-    // Force offer creation for testing
-    function forceOfferCreation() {
-      if (peerConnection && isPeerConnectionReady()) {
-        console.log("MANUALLY CREATING OFFER...");
-        peerConnection.createOffer().then(offer => {
-          peerConnection.setLocalDescription(offer);
-          socket.emit("offer", { roomId, offer });
-          console.log("Manual offer sent!");
-        }).catch(err => console.error("Manual offer failed:", err));
-      }
-    }
+    socket.on('answer', (answer) => {
+      console.log('📨 Received answer');
+      handleAnswer(answer);
+    });
 
-    // Force answer creation for testing
-    function forceAnswerCreation() {
-      if (peerConnection && isPeerConnectionReady()) {
-        console.log("MANUALLY CREATING ANSWER...");
-        peerConnection.createAnswer().then(answer => {
-          peerConnection.setLocalDescription(answer);
-          socket.emit("answer", { roomId, answer });
-          console.log("Manual answer sent!");
-        }).catch(err => console.error("Manual answer failed:", err));
-      }
-    }
+    socket.on('ice-candidate', (candidate) => {
+      console.log('📨 Received ICE candidate');
+      handleIceCandidate(candidate);
+    });
 
-    // Controls
-    document.getElementById("micBtn").onclick = () => {
+    socket.on('user-disconnected', (userId) => {
+      console.log('👋 User disconnected:', userId);
+      updateStatus('Other user left the call', false, true);
+      alert('The other participant has left the call.');
+    });
+
+    // Control buttons
+    document.getElementById('micBtn').onclick = () => {
       audioEnabled = !audioEnabled;
       localStream.getAudioTracks()[0].enabled = audioEnabled;
-
-      const btn = document.getElementById("micBtn");
-      if (audioEnabled) {
-        btn.classList.remove("off");
-        btn.innerHTML = '<i class="bi bi-mic-fill"></i>';
-      } else {
-        btn.classList.add("off");
-        btn.innerHTML = '<i class="bi bi-mic-mute-fill"></i>';
-      }
+      
+      const btn = document.getElementById('micBtn');
+      btn.classList.toggle('off', !audioEnabled);
+      btn.innerHTML = audioEnabled ? 
+        '<i class="bi bi-mic-fill"></i>' : 
+        '<i class="bi bi-mic-mute-fill"></i>';
     };
 
-    document.getElementById("videoBtn").onclick = () => {
+    document.getElementById('videoBtn').onclick = () => {
       videoEnabled = !videoEnabled;
       localStream.getVideoTracks()[0].enabled = videoEnabled;
-
-      const btn = document.getElementById("videoBtn");
-      if (videoEnabled) {
-        btn.classList.remove("off");
-        btn.innerHTML = '<i class="bi bi-camera-video-fill"></i>';
-      } else {
-        btn.classList.add("off");
-        btn.innerHTML = '<i class="bi bi-camera-video-off-fill"></i>';
-      }
+      
+      const btn = document.getElementById('videoBtn');
+      btn.classList.toggle('off', !videoEnabled);
+      btn.innerHTML = videoEnabled ? 
+        '<i class="bi bi-camera-video-fill"></i>' : 
+        '<i class="bi bi-camera-video-off-fill"></i>';
     };
 
-    document.getElementById("endBtn").onclick = async () => {
-      if (confirm("Are you sure you want to end the call?")) {
-        try {
-          // End call on server side
-          await fetch('/appointments/end-call/' + appointmentId, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-          });
-
-          console.log("Call ended on server");
-        } catch (err) {
-          console.error("Error ending call on server:", err);
+    document.getElementById('endBtn').onclick = () => {
+      if (confirm('Are you sure you want to end the call?')) {
+        // Stop all tracks
+        if (localStream) {
+          localStream.getTracks().forEach(track => track.stop());
         }
-
-        // Clean up local resources
-        localStream.getTracks().forEach(track => track.stop());
-        if (peerConnection) peerConnection.close();
+        
+        // Close peer connection
+        if (peerConnection) {
+          peerConnection.close();
+        }
+        
+        // Disconnect socket
+        socket.disconnect();
+        
+        // Close window
         window.close();
       }
     };
 
-    function cancelCall() {
-      window.close();
-    }
+    // Start the call when page loads
+    window.onload = () => {
+      console.log('🏁 Initializing call for room:', roomId);
+      initializeCall();
+    };
 
-    // Start when page loads
-    getAppointmentId();
+    // Cleanup on page unload
+    window.onbeforeunload = () => {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+      }
+      if (peerConnection) {
+        peerConnection.close();
+      }
+      socket.disconnect();
+    };
   </script>
 
 </body>
